@@ -9,7 +9,16 @@ format:
       text: |
         <meta name="ai-title" content="9. 상관과 회귀 입문">
         <meta name="ai-context" content="
-        이 챕터는 상관 ≠ 인과, 단순회귀, 교란 — 심화는 3. Linear Regression를 다룹니다. (초안 작성 전)
+        이 챕터는 산점도와 상관계수(Pearson, Spearman), 상관은 인과가 아니라는 것(교란), 단순선형회귀 요약을 짧게 다루고 심화는 3. Linear Regression(https://kkonoo.github.io/3_linear_regression/)으로 연결합니다.
+        자료 A(set.seed(20261025)): 종양 시료 40개, 순도 0.3-0.9, 유전자 A와 B는 종양세포에서만 발현하고 서로 조절 관계가 없습니다(참값).
+        A와 B의 Pearson r = 0.56(95% CI 0.30-0.74), p = 0.0002, Spearman ρ = 0.55. 시료 하나를 잘못 측정하면 Pearson r이 -0.55로 부호가 바뀌고 Spearman은 0.45. 산점도를 반드시 봅니다.
+        r ≈ 0이어도 곡선 관계일 수 있고, r이 크다고 기울기가 큰 것은 아닙니다.
+        교란: 순도가 A와 B를 함께 움직입니다. 순도의 영향을 뺀 잔차의 상관은 -0.03(p = 0.87), lm(B ~ A + purity)에서 A의 계수 -0.03, p = 0.87로 관계 없음이 드러납니다.
+        오믹스의 교란변수: 종양 순도·세포 유형 구성, batch, 나이·성별, RNA 품질. 설계로 막고, 못 막으면 측정해서 모형에 넣습니다.
+        자료 B(set.seed(2)): 마우스 30마리, 고지방식 0-16주, 간 중성지방 = 20 + 4 × 주 + 오차(SD 8). lm 결과 절편 22.2, 기울기 3.94(95% CI 3.26-4.63), p = 1.9e-12, 잔차 표준오차 9.55(자유도 28 = n - 2), R² = 0.83.
+        잔차 SD의 자유도가 n - 2인 것은 절편과 기울기 두 개를 추정했기 때문입니다(1장).
+        t-검정도 회귀: 6장 자료로 lm(y ~ diet)의 dietHFD 계수 1.04, p = 0.080으로 등분산 t-검정과 같습니다. ANOVA, eQTL 회귀, DESeq2·limma 모형도 선형모형의 확장입니다.
+        모든 실습은 base R로 합니다.
         ">
 ---
 
@@ -17,14 +26,213 @@ format:
 ## 원자료
 - GT `1-I`, `1-II` (Simple)
 - dsbook `regression/*.Rmd` — 구조 참고
+- 예제는 종양 시료의 공동발현과 고지방식 기간으로 새로 만들고, 문장·코드는 새로 씀
+- 이 장은 짧은 요약. 회귀는 [3. Linear Regression](https://kkonoo.github.io/3_linear_regression/)에서 제대로 다룸
 :::
+
+::: {.callout-important collapse="true"}
+## 실습 자료 두 가지
+
+**자료 A: 종양 시료 40개의 두 유전자 발현** (`set.seed(20261025)`)
+
+| 항목 | 참값 |
+|---|---|
+| 종양 순도 (시료 속 종양세포 비율) | 0.3–0.9에서 고르게 |
+| 유전자 A, B | **종양세포에서만** 발현. 시료의 발현량 = 순도 × 세포당 발현 |
+| A와 B 사이의 조절 관계 | **없음** (세포 안에서는 서로 독립) |
+
+**자료 B: 고지방식 기간과 간 중성지방** (`set.seed(2)`)
+
+| 항목 | 참값 |
+|---|---|
+| 마우스 | 30마리, 고지방식 0–16주 |
+| 관계 | 중성지방 = 20 + 4 × 주 + 오차 (SD 8) |
+:::
+
+```{r}
+#| label: setup-data
+set.seed(20261025)
+purity <- round(runif(40, 0.3, 0.9), 2)                          # 종양 순도
+geneA  <- round(log2(purity * 200 * exp(rnorm(40, 0, 0.25)) + 1), 2)
+geneB  <- round(log2(purity * 80  * exp(rnorm(40, 0, 0.25)) + 1), 2)
+```
+
+# 1. 산점도와 상관계수
+
+## 1) 먼저 그림
+
+```{r}
+#| label: fig-scatter
+#| fig-cap: "종양 시료 40개에서 유전자 A와 B의 발현"
+#| fig-height: 4
+plot(geneA, geneB, pch = 19, col = "#5B4D80", las = 1,
+     xlab = "유전자 A (log2)", ylab = "유전자 B (log2)")
+```
+
+- A가 높은 시료에서 B도 높은 경향 → "두 유전자가 함께 조절되는가?"
+
+## 2) Pearson 상관계수
+
+$$r = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum (x_i - \bar{x})^2}\sqrt{\sum (y_i - \bar{y})^2}}$$
+
+- −1부터 1까지. **직선 관계**가 얼마나 강한지
+- 두 변수를 z-score로 바꿔 곱한 것의 평균에 가까움 ([3장](03_distributions.qmd))
+
+```{r}
+#| label: pearson
+cor.test(geneA, geneB)
+cor(geneA, geneB, method = "spearman")
+```
+
+- Pearson r = 0.56 (95% CI 0.30–0.74), p = 0.0002
+- Spearman ρ = 0.55: 값 대신 **순위**의 상관 → 직선이 아니어도 단조 관계면 잡고, 이상치에 강함
+
+## 3) 이상치 하나
+
+```{r}
+#| label: outlier
+A2 <- geneA; B2 <- geneB
+A2[1] <- 3; B2[1] <- 12              # 시료 하나가 잘못 측정됨
+c(pearson  = cor(A2, B2),
+  spearman = cor(A2, B2, method = "spearman"))
+```
+
+- 40개 중 **하나** 때문에 Pearson r이 0.56 → −0.55로 부호까지 바뀜
+- Spearman은 0.55 → 0.45
+- 상관계수만 보지 말고 **반드시 산점도**를 볼 것 ([1장](01_describing_data.qmd)의 robust 요약과 같은 이야기)
 
 ::: {.callout-warning}
-## 작성 예정
-이 장은 아직 쓰는 중입니다. 다룰 내용:
-
-1. 산점도와 상관계수 (Pearson, Spearman)
-2. 상관은 인과가 아니다: 교란
-3. 단순선형회귀 한 장 요약
-4. 더 배우기: [3. Linear Regression](https://kkonoo.github.io/3_linear_regression/)
+## 상관계수가 말해 주지 않는 것
+- r ≈ 0이어도 관계가 없다는 뜻이 아님 — U자처럼 **곡선** 관계일 수 있음
+- r이 크다고 기울기가 큰 것도 아님 — r은 흩어진 정도, 기울기는 변화량
+- 그리고 무엇보다, **상관은 인과가 아님** → 다음 절
 :::
+
+# 2. 상관은 인과가 아니다: 교란
+
+## 1) 순도가 둘 다 움직인다
+
+- 이 자료에서 A와 B는 사실 **아무 조절 관계가 없음** (참값)
+- 둘 다 종양세포에서만 발현 → 순도가 높은 시료일수록 **둘 다** 높게 측정됨
+- 순도 = A와 B 모두에 영향을 주는 **교란변수 (confounder)**
+
+```{r}
+#| label: fig-confound
+#| fig-cap: "같은 산점도를 종양 순도로 색칠. 진할수록 순도가 높음"
+#| fig-height: 4
+pal <- colorRampPalette(c("grey85", "#5B4D80"))(100)
+plot(geneA, geneB, pch = 19, cex = 1.3, las = 1, col = pal[round((purity - 0.3) / 0.6 * 99) + 1],
+     xlab = "유전자 A (log2)", ylab = "유전자 B (log2)")
+legend("topleft", c("순도 0.3", "순도 0.9"), pch = 19, col = pal[c(1, 100)], bty = "n")
+```
+
+- 오른쪽 위 = 진한 점(순도 높음), 왼쪽 아래 = 연한 점(순도 낮음)
+
+## 2) 순도를 감안하면
+
+```{r}
+#| label: adjust
+rA <- resid(lm(geneA ~ purity))      # 순도로 설명되는 부분을 뺀 A
+rB <- resid(lm(geneB ~ purity))      # 순도로 설명되는 부분을 뺀 B
+cor.test(rA, rB)$estimate
+cor.test(rA, rB)$p.value
+summary(lm(geneB ~ geneA + purity))$coefficients
+```
+
+- 순도의 영향을 뺀 상관 = −0.03 (p = 0.87) → 참값(관계 없음)과 맞음
+- 회귀에 순도를 함께 넣어도 A의 계수 −0.03, p = 0.87
+- 같은 자료인데 **무엇을 감안하느냐**에 따라 결론이 뒤집힘
+
+| 오믹스의 흔한 교란변수 | 무엇을 함께 움직이나 |
+|---|---|
+| 종양 순도, 세포 유형 구성 | bulk 시료의 수많은 유전자 |
+| batch, 시퀀싱 날짜 | 같은 batch 시료의 전반적 발현 |
+| 나이, 성별 | 노화·성별 관련 유전자와 표현형 |
+| RNA 품질 (RIN) | 분해되기 쉬운 전사체 |
+
+- 교란을 막는 최선은 **설계** (무작위 배정, batch 균형, [4장](04_sampling_clt.qmd) 5절)
+- 막지 못했다면 측정해서 모형에 넣음 → 다중회귀 ([3. Linear Regression](https://kkonoo.github.io/3_linear_regression/))
+
+# 3. 단순선형회귀 한 장 요약
+
+## 1) 모형
+
+$$y_i = \beta_0 + \beta_1 x_i + \varepsilon_i, \qquad \varepsilon_i \sim N(0, \sigma^2)$$
+
+- 상관은 "함께 움직이는 정도", 회귀는 "x가 1 늘 때 y가 **얼마나** 변하나"(기울기 $\beta_1$)
+- 예: 고지방식 기간(주)에 따른 간 중성지방. 참 기울기 4 mg/g/주
+
+```{r}
+#| label: fig-reg
+#| fig-cap: "고지방식 기간과 간 중성지방(마우스 30마리). 보라 선: 최소제곱 회귀선, 회색 점선: 참 관계"
+#| fig-height: 4
+set.seed(2)
+weeks <- rep(seq(0, 16, by = 2), length.out = 30)
+tg    <- round(20 + 4 * weeks + rnorm(30, 0, 8), 1)
+fit   <- lm(tg ~ weeks)
+
+plot(weeks, tg, pch = 19, col = "grey60", las = 1,
+     xlab = "고지방식 기간 (주)", ylab = "간 중성지방 (mg/g)")
+abline(fit, col = "#5B4D80", lwd = 2)
+abline(20, 4, col = "grey40", lty = 2)
+```
+
+## 2) `lm()` 출력 읽기
+
+```{r}
+#| label: lm
+summary(fit)
+confint(fit)
+```
+
+| 출력 | 뜻 | 이 자료 |
+|---|---|---|
+| `(Intercept)` | x = 0일 때 y의 추정값 ($\hat\beta_0$) | 22.2 (참값 20) |
+| `weeks` Estimate | 기울기 $\hat\beta_1$: 1주마다 늘어나는 중성지방 | 3.94 (참값 4), 95% CI 3.26–4.63 |
+| Pr(>\|t\|) | 기울기 = 0인지 검정한 p-value | 1.9 × 10⁻¹² |
+| Residual standard error | 회귀선 주변의 흩어짐 $\hat\sigma$, **자유도 n − 2** | 9.55 (참값 8), 자유도 28 |
+| R-squared | y의 변동 중 x로 설명되는 비율 = $r^2$ | 0.83 |
+
+- 잔차 표준오차의 자유도가 n − 2인 이유: 절편과 기울기 **두 개를 추정**했기 때문 ([1장](01_describing_data.qmd) 4절)
+- 기울기의 95% CI가 참값 4를 포함 ([5장](05_confidence_intervals.qmd)과 같은 해석)
+
+::: {.callout-tip}
+## t-검정도 회귀다
+- 그룹을 0/1로 놓으면 두 그룹 비교가 회귀가 됨. [6장](06_hypothesis_testing.qmd)의 Chow vs HFD 자료로 확인
+
+```{r}
+#| label: ttest-as-lm
+set.seed(20261016)                                      # 6장과 같은 자료
+chow <- round(rnorm(6, mean = 5.0, sd = 0.8), 2)
+hfd  <- round(rnorm(6, mean = 6.0, sd = 0.8), 2)
+diet <- factor(rep(c("Chow", "HFD"), each = 6))
+summary(lm(c(chow, hfd) ~ diet))$coefficients
+```
+
+- `dietHFD`의 계수 1.04 = 평균 차이, p = 0.080 = 6장의 등분산 t-검정과 같음
+- [8장](08_test_map.qmd)의 ANOVA, eQTL 회귀, DESeq2·limma의 모형도 모두 이 틀(선형모형)의 확장
+:::
+
+# 4. 더 배우기
+
+- 회귀는 [3. Linear Regression](https://kkonoo.github.io/3_linear_regression/)에서 이어짐
+  - 최소제곱 추정과 행렬 표현
+  - 다중회귀와 교란변수 보정
+  - 잔차 진단, 가정 확인
+  - 범주형 변수와 상호작용
+  - 일반화선형모형 (로지스틱, 포아송·음이항)
+
+# 5. 정리
+
+- 산점도를 먼저 보고, Pearson(직선 관계)과 Spearman(순위, 이상치에 강함)으로 요약
+- 이상치 하나가 Pearson r의 부호까지 바꿀 수 있음
+- 상관은 인과가 아님 — 순도 같은 교란변수가 관계없는 두 유전자를 함께 움직임
+- 교란은 설계로 막고, 못 막았으면 측정해서 모형에 넣음
+- 단순회귀의 기울기는 "x가 1 늘 때 y의 변화", 잔차 SD의 자유도는 n − 2
+- t-검정, ANOVA는 모두 선형모형의 특수한 경우
+
+# 연습문제
+
+1. 자료 A에서 `cor(geneA, geneB, method = "kendall")`도 구해 Pearson, Spearman과 비교하라. 이상치를 넣은 `A2`, `B2`에서는 어떤가?
+2. 자료 A를 만들 때 순도를 모든 시료에서 0.6으로 고정하면 A와 B의 상관은 어떻게 되는가? 왜 그런지 설명하라.
+3. 자료 B에서 마우스를 10마리만 쓰면 기울기의 95% CI는 얼마나 넓어지는가? `set.seed()`를 바꿔 여러 번 해 보라.
