@@ -7,29 +7,396 @@ format:
   html:
     include-in-header:
       text: |
-        <meta name="ai-title" content="8. 검정 지도">
+        <meta name="ai-title" content="8. 검정 지도와 실습">
         <meta name="ai-context" content="
-        이 챕터는 데이터 형태와 그룹 수로 검정 고르기 — 오믹스 예시 R 실습를 다룹니다. (초안 작성 전)
+        이 챕터는 결과 변수의 종류, 그룹 수, 짝 여부, 분포 가정으로 검정을 고르는 지도와 검정마다 가상의 오믹스 자료로 하는 R 실습 6개를 다룹니다.
+        지도: 연속형 2그룹은 t-검정(Welch)/Wilcoxon 순위합, 짝이 있으면 paired t/Wilcoxon 부호순위. 3그룹 이상은 ANOVA/Kruskal-Wallis, 짝이 있으면 반복측정 ANOVA/Friedman. 범주형은 카이제곱/Fisher, 짝이 있으면 McNemar. RNA-seq count는 음이항 모형(DESeq2, edgeR), limma-voom. 연속형끼리의 관계는 상관·회귀(9장).
+        모수 검정은 평균을, 비모수 검정은 순위를 쓰며, 어느 쪽을 쓸지는 자료를 보기 전에 정합니다.
+        실습 1(set.seed(20261024)): KO vs WT 마우스 그룹당 8마리, 참값 WT 6.0, KO 5.0, SD 0.7. Welch p = 0.0004, 등분산 t p = 0.0001, Wilcoxon p = 0.0003, 평균 차이 -1.54, 95% CI (-2.20, -0.88). KO 시료 하나를 11.5로 오염시키면 Welch p = 0.52, Wilcoxon p = 0.015.
+        실습 2(set.seed(2)): eQTL, 사람 100명, G 빈도 0.3, G 하나당 +0.4, SD 0.8. 유전형 AA 55, AG 34, GG 11명, 평균 5.06, 5.37, 5.79. ANOVA p = 0.036, Kruskal-Wallis p = 0.20, Holm 보정 사후 검정 AA vs GG p = 0.050. G 개수로 회귀하면 기울기 0.35, p = 0.010.
+        세 번 t-검정을 하지 않고 ANOVA를 쓰는 이유는 다중검정(10장). F = 그룹 사이 변동 / 그룹 안 변동.
+        odds ratio = ad/bc, 95% CI는 log(OR) ± 1.96 sqrt(1/a+1/b+1/c+1/d).
+        실습 3 GWAS(set.seed(7)), 대조군 위험 대립유전자 빈도 0.3: biobank 그룹당 10만 명 참 OR 1.03, 추정 OR 1.04(1.03-1.06), p = 1.9e-9. medium 2000명 참 OR 1.2, 추정 1.20(1.10-1.32), p = 1.3e-4. small 100명 참 OR 1.5, 추정 1.40(0.92-2.11), p = 0.14.
+        처음엔 여기서 헷갈려요: GWAS에서 p-value만 보고하면 의미가 적습니다. p 순위 1등인 biobank의 OR은 1.04뿐이고, OR이 가장 큰 small 연구는 p = 0.14. OR과 95% CI, 대립유전자 빈도를 함께 보고합니다. GWAS 유의수준 5e-8은 10장.
+        실습 4(set.seed(1)): 반응군 8명 중 5명, 비반응군 8명 중 0명이 변이(참 비율 0.7, 0.1). 기대 개수 2.5인 칸이 있어 Fisher exact, p = 0.026, OR = 무한대(0인 칸).
+        실습 5(set.seed(5)): 환자 8명의 종양 vs 인접 정상, 종양이 0.5 높음, 환자 사이 SD 1.0, 측정 SD 0.3. 짝 무시 Welch p = 0.23, CI (-0.45, 1.70). paired t p = 0.007, CI (0.23, 1.02). 차이의 one-sample t와 같고, Wilcoxon 부호순위 p = 0.016.
+        실습 6(set.seed(3)): 종양 200개를 NGS와 ddPCR로 검사(참 변이 30%, 민감도 80% vs 98%). 둘 다 양성 47, 둘 다 음성 135, ddPCR만 양성 16, NGS만 양성 2. McNemar p = 0.002.
+        모든 실습은 base R로 합니다.
         ">
 ---
 
 ::: {.callout-note collapse="true"}
 ## 원자료
-- `Overview_of_statistical_tests.pdf`, `statistics compare.png`, `statistics.png`
+- `Overview_of_statistical_tests.pdf`, `statistics compare.png`, `statistics.png` — 지도의 구조 참고
 - GT cheat sheet 묶음
-- PH125 `7.Association tests` 강의, Study_5
+- PH125 `7.Association tests` 강의, Study_5 — "GWAS에서 p-value만 보고하면 의미가 적다"를 "처음엔 여기서 헷갈려요" 상자로
+- 실습 예제 6개는 모두 새로 만든 가상의 오믹스 자료, 문장·코드는 새로 씀
 :::
+
+::: {.callout-important collapse="true"}
+## 실습 자료 6개와 참값
+
+| 실습 | 상황 | 검정 | 참값 |
+|---|---|---|---|
+| 1 | KO vs WT 마우스, 유전자 발현 (log2 CPM), 그룹당 8마리 | t-검정, Wilcoxon | WT 6.0, KO 5.0, SD 0.7 |
+| 2 | eQTL: 사람 100명, SNP 유전형 AA/AG/GG별 발현 | ANOVA, Kruskal-Wallis | G 대립유전자 하나당 +0.4, SD 0.8, G 빈도 0.3 |
+| 3 | GWAS 연관 분석, 사례군 vs 대조군의 대립유전자 수 | 카이제곱, odds ratio | 대조군 위험 대립유전자 빈도 0.3, 연구별 참 OR 1.03 / 1.2 / 1.5 |
+| 4 | 항암제 반응군 8명 vs 비반응군 8명, 변이 유무 | Fisher exact | 변이 비율 0.7 vs 0.1 |
+| 5 | 환자 8명의 종양 vs 인접 정상 조직 발현 | paired t-검정 | 종양이 0.5 높음, 환자 사이 SD 1.0, 측정 SD 0.3 |
+| 6 | 종양 200개를 NGS와 ddPCR로 각각 변이 검사 | McNemar | 변이 보유 30%, 민감도 NGS 80% / ddPCR 98% |
+
+- 자료는 실습마다 장 안에서 만듦 (`set.seed()`를 실습마다 따로)
+:::
+
+# 1. 검정 고르기 지도
+
+## 1) 네 가지 질문
+
+1. **결과 변수의 종류**는? 연속형 / count / 범주형 ([1장](01_describing_data.qmd))
+2. **몇 그룹**을 비교하나? 2그룹 / 3그룹 이상 / 그룹이 아니라 연속인 변수와의 관계
+3. **짝지어져** 있나? 같은 환자의 종양-정상, 같은 마우스의 처리 전후, 같은 시료를 두 방법으로
+4. **분포 가정**이 맞나? 정규에 가까운가, 이상치가 있나, n이 아주 작은가
+
+## 2) 지도
+
+| 결과 변수 | 비교 | 짝 없음 (독립) | 짝 있음 |
+|---|---|---|---|
+| 연속형, 정규에 가까움 | 2그룹 | 두 표본 t-검정 (Welch) → 실습 1 | paired t-검정 → 실습 5 |
+| 연속형, 치우침·이상치 | 2그룹 | Wilcoxon 순위합 (Mann-Whitney) → 실습 1 | Wilcoxon 부호순위 → 실습 5 |
+| 연속형, 정규에 가까움 | 3그룹 이상 | 일원 분산분석 (ANOVA) → 실습 2 | 반복측정 ANOVA, 혼합모형 |
+| 연속형, 치우침·이상치 | 3그룹 이상 | Kruskal-Wallis → 실습 2 | Friedman |
+| 범주형 | 그룹 × 범주 | 카이제곱, 칸이 작으면 Fisher exact → 실습 3, 4 | McNemar → 실습 6 |
+| count (RNA-seq) | 그룹 | 음이항 모형 (DESeq2, edgeR) → 6절 | 짝을 모형에 넣음 (`~ patient + condition`) |
+| 연속형 vs 연속형 | 관계 | 상관, 회귀 → [9장](09_correlation_regression.qmd) | |
+
+::: {.callout-tip}
+## 모수 검정 vs 비모수 검정
+| | 모수 검정 (t, ANOVA) | 비모수 검정 (Wilcoxon, Kruskal-Wallis) |
+|---|---|---|
+| 쓰는 정보 | 값 자체 (평균) | 값의 **순위** |
+| 가정 | 정규분포에 가까움 | 분포 모양 가정이 적음 |
+| 이상치 | 크게 흔들림 | 강함 |
+| 정규일 때 검정력 | 조금 높음 | 조금 낮음 |
+| 효과크기 | 평균 차이 | 위치 이동 (중앙값 차이에 가까움) |
+
+- 어느 쪽을 쓸지는 **자료를 보기 전에** 정함. 둘 다 돌려 보고 작은 p를 고르면 Type I 오류가 늘어남 ([7장](07_power.qmd))
+:::
+
+# 2. 두 그룹 연속형: t-검정 vs Wilcoxon
+
+## 1) 실습 1: KO 마우스의 유전자 발현
+
+- 유전자 X를 knock-out한 마우스 8마리와 WT 8마리. 유전자 X 하류의 표적 유전자 발현(log2 CPM)
+- 참값: WT 6.0, KO 5.0 (차이 −1.0), SD 0.7
+
+```{r}
+#| label: ex1-data
+set.seed(20261024)
+wt <- round(rnorm(8, mean = 6.0, sd = 0.7), 2)
+ko <- round(rnorm(8, mean = 5.0, sd = 0.7), 2)
+wt
+ko
+```
+
+```{r}
+#| label: ex1-test
+t.test(ko, wt)                                  # 기본값: Welch (분산이 달라도 됨)
+c(welch    = t.test(ko, wt)$p.value,
+  student  = t.test(ko, wt, var.equal = TRUE)$p.value,
+  wilcoxon = wilcox.test(ko, wt)$p.value)
+```
+
+- 세 검정 모두 p < 0.001 → 정규에 가까운 깨끗한 자료에서는 결론이 같음
+- 평균 차이 4.81 − 6.35 = −1.54, 95% CI (−2.20, −0.88) — 참값 −1.0을 포함
+
+## 2) 이상치가 하나 섞이면
+
+- KO 1번 시료의 라이브러리가 오염되어 값이 11.5로 나왔다고 하자
+
+```{r}
+#| label: ex1-outlier
+ko_bad <- ko
+ko_bad[1] <- 11.5
+c(welch    = t.test(ko_bad, wt)$p.value,
+  wilcoxon = wilcox.test(ko_bad, wt)$p.value)
+```
+
+```{r}
+#| label: fig-ex1
+#| fig-cap: "실습 1. 왼쪽: 원래 자료, 오른쪽: KO 시료 하나가 11.5로 오염됨. 가로선은 그룹 평균"
+#| fig-height: 3.5
+par(mfrow = c(1, 2), mar = c(3, 4, 2, 1))
+for (k in list(ko, ko_bad)) {
+  stripchart(list(WT = wt, KO = k), vertical = TRUE, method = "jitter", pch = 19, las = 1,
+             col = c("grey60", "#5B4D80"), ylim = c(3, 12), ylab = "log2 CPM",
+             main = ifelse(max(k) > 10, "이상치 1개", "원래 자료"))
+  segments(c(0.8, 1.8), c(mean(wt), mean(k)), c(1.2, 2.2), c(mean(wt), mean(k)),
+           lwd = 3, col = c("grey60", "#5B4D80"))
+}
+```
+
+| 검정 | 원래 자료 | 이상치 1개 |
+|---|---|---|
+| Welch t-검정 | 0.0004 | **0.52** |
+| Wilcoxon | 0.0003 | 0.015 |
+
+- 값 하나 때문에 KO 평균이 끌려 올라가고 SD가 커져서 t-검정의 p가 0.52로 무너짐
+- Wilcoxon은 순위만 봄 → 11.5든 6.7이든 "가장 큰 값"일 뿐 → 여전히 p < 0.05
+- 그렇다고 이상치를 Wilcoxon으로 덮고 끝내지 말 것 → 원인부터 확인 ([1장](01_describing_data.qmd) 6절)
+
+# 3. 세 그룹 이상: ANOVA vs Kruskal-Wallis
+
+## 1) 실습 2: eQTL
+
+- 사람 100명의 혈액에서 유전자 하나의 발현과 그 근처 SNP의 유전형을 잼
+- 유전형 AA, AG, GG. G 대립유전자 하나당 발현이 0.4씩 올라감 (참값)
+
+```{r}
+#| label: ex2-data
+set.seed(2)
+g    <- rbinom(100, size = 2, prob = 0.3)              # G 대립유전자 수 (3장의 이항분포)
+expr <- round(5.0 + 0.4 * g + rnorm(100, 0, 0.8), 2)
+geno <- factor(c("AA", "AG", "GG")[g + 1], levels = c("AA", "AG", "GG"))
+table(geno)
+round(tapply(expr, geno, mean), 2)
+```
+
+```{r}
+#| label: fig-ex2
+#| fig-cap: "실습 2. SNP 유전형별 유전자 발현 (사람 100명)"
+#| fig-height: 3.5
+boxplot(expr ~ geno, outline = FALSE, col = "white", border = "grey40", las = 1,
+        xlab = "유전형", ylab = "발현 (log2)")
+stripchart(expr ~ geno, vertical = TRUE, method = "jitter", pch = 19, cex = 0.8,
+           col = "#5B4D80", add = TRUE)
+```
+
+## 2) 왜 t-검정을 세 번 하지 않나
+
+- AA vs AG, AA vs GG, AG vs GG를 각각 α = 0.05로 검정하면 **적어도 하나가 우연히 걸릴 확률**이 0.05보다 커짐 ([10장](10_multiple_testing.qmd))
+- ANOVA는 "세 그룹 평균이 모두 같은가"를 **한 번에** 검정
+
+$$F = \frac{\text{그룹 사이의 변동}}{\text{그룹 안의 변동}}$$
+
+```{r}
+#| label: ex2-test
+summary(aov(expr ~ geno))                                   # 일원 ANOVA
+kruskal.test(expr ~ geno)                                   # 순위 기반
+pairwise.t.test(expr, geno, p.adjust.method = "holm")       # 사후 검정 (보정한 쌍별 비교)
+```
+
+| 검정 | p |
+|---|---|
+| ANOVA | 0.036 |
+| Kruskal-Wallis | 0.20 |
+| 사후 검정 AA vs GG (Holm 보정) | 0.050 |
+
+- ANOVA: 유전형에 따라 평균이 다름 (p = 0.036)
+- Kruskal-Wallis: 같은 자료에서 p = 0.20 → 정규에 가까운 자료에서는 순위 기반이 검정력이 조금 낮음
+- ANOVA가 유의하면 **어느 쌍이** 다른지 사후 검정으로 봄 → 보정한 p-value
+
+::: {.callout-tip}
+## 유전형에는 순서가 있다
+- ANOVA는 AA, AG, GG를 순서 없는 세 그룹으로 봄
+- eQTL 분석은 보통 G의 개수(0, 1, 2)를 숫자로 넣은 **회귀**를 씀 (additive model)
+
+```{r}
+#| label: ex2-lm
+summary(lm(expr ~ g))$coefficients
+```
+
+- 기울기 0.35 (참값 0.4), p = 0.010 → 순서 정보를 쓰니 ANOVA보다 p가 작음
+- 회귀는 [9장](09_correlation_regression.qmd)
+:::
+
+# 4. 범주형: 카이제곱, Fisher, odds ratio
+
+## 1) 2 × 2 표와 odds ratio
+
+| | 위험 대립유전자 | 다른 대립유전자 |
+|---|---|---|
+| 사례군 (환자) | a | b |
+| 대조군 | c | d |
+
+- odds = $p / (1 - p)$ = "일어날 확률 / 일어나지 않을 확률"
+- **odds ratio (OR)** = 사례군의 odds / 대조군의 odds = $\dfrac{a/b}{c/d} = \dfrac{ad}{bc}$
+  - OR = 1: 연관 없음, OR > 1: 위험 대립유전자가 환자에게 더 흔함
+- OR의 95% 신뢰구간: $\log(\text{OR}) \pm 1.96\sqrt{1/a + 1/b + 1/c + 1/d}$를 지수로 되돌림
+- 카이제곱 검정: 각 칸의 관측 개수가 "연관 없음"일 때 기대되는 개수와 얼마나 다른가
+
+## 2) 실습 3: GWAS 연관 분석
+
+- 같은 SNP를 세 연구가 분석. 대조군의 위험 대립유전자 빈도 0.3
+- 연구마다 규모와 참 OR이 다름
+
+```{r}
+#| label: ex3-gwas
+or_ci <- function(tab) {                     # 2×2 표 → OR과 95% CI
+  a <- tab[1, 1]; b <- tab[1, 2]; c <- tab[2, 1]; d <- tab[2, 2]
+  or <- (a * d) / (b * c)
+  se <- sqrt(1/a + 1/b + 1/c + 1/d)
+  c(OR = or, lo = exp(log(or) - 1.96 * se), hi = exp(log(or) + 1.96 * se))
+}
+gwas <- function(n_case, n_ctrl, f, OR) {    # 사람 수 → 대립유전자 수 (한 사람에 2개)
+  odds_case <- OR * f / (1 - f)
+  risk_case <- rbinom(1, 2 * n_case, odds_case / (1 + odds_case))
+  risk_ctrl <- rbinom(1, 2 * n_ctrl, f)
+  tab <- matrix(c(risk_case, 2 * n_case - risk_case,
+                  risk_ctrl, 2 * n_ctrl - risk_ctrl), nrow = 2, byrow = TRUE)
+  c(n_per_group = n_case, or_ci(tab), p = chisq.test(tab)$p.value)
+}
+
+set.seed(7)
+studies <- rbind(biobank = gwas(1e5, 1e5, f = 0.3, OR = 1.03),
+                 medium  = gwas(2000, 2000, f = 0.3, OR = 1.2),
+                 small   = gwas(100, 100, f = 0.3, OR = 1.5))
+signif(studies, 3)
+```
+
+| 연구 | 그룹당 사람 수 | 참 OR | 추정 OR (95% CI) | p |
+|---|---|---|---|---|
+| biobank | 100,000 | 1.03 | 1.04 (1.03–1.06) | 1.9 × 10⁻⁹ |
+| medium | 2,000 | 1.2 | 1.20 (1.10–1.32) | 1.3 × 10⁻⁴ |
+| small | 100 | 1.5 | 1.40 (0.92–2.11) | 0.14 |
+
+```{r}
+#| label: fig-ex3
+#| fig-cap: "실습 3. 세 연구의 odds ratio와 95% 신뢰구간 (로그 척도). 점선: OR = 1 (연관 없음)"
+#| fig-height: 3
+par(mar = c(4, 7, 1, 1))
+plot(studies[, "OR"], 3:1, log = "x", xlim = c(0.8, 2.5), ylim = c(0.5, 3.5), pch = 19,
+     col = "#5B4D80", cex = 1.3, yaxt = "n", xlab = "odds ratio (로그 척도)", ylab = "")
+segments(studies[, "lo"], 3:1, studies[, "hi"], 3:1, lwd = 2, col = "#5B4D80")
+axis(2, at = 3:1, labels = rownames(studies), las = 1)
+abline(v = 1, lty = 2, col = "grey40")
+```
 
 ::: {.callout-warning}
-## 작성 예정
-이 장은 아직 쓰는 중입니다. 다룰 내용:
-
-1. 검정 고르기 지도 (데이터 형태 × 그룹 수 × 짝 여부)
-2. 두 그룹 연속형: t-test vs Wilcoxon
-3. 세 그룹 이상: ANOVA vs Kruskal-Wallis
-4. 범주형: Fisher exact test, 카이제곱 검정, odds ratio
-5. 짝지은 데이터: paired t-test, McNemar
-6. 실습: 검정마다 오믹스 예시 데이터로 R 실습 1개
-
-처음엔 여기서 헷갈려요: GWAS에서 p-value만 보고하면 의미가 없다 → odds ratio를 같이
+## 처음엔 여기서 헷갈려요
+- Study_5 메모: **GWAS에서 p-value만 보고하면 의미가 적다 → odds ratio를 같이**
+- p-value 순으로 줄 세우면 biobank가 1등 (p = 1.9 × 10⁻⁹). 그런데 OR은 1.04 — odds가 4% 오르는 정도
+- small 연구는 OR이 가장 크지만(1.40) 사람이 적어 신뢰구간이 1을 포함 → p = 0.14
+- p-value = 효과크기 + **표본 크기**가 섞인 값 ([6장](06_hypothesis_testing.qmd) 8절). 사람이 수십만 명이면 아주 작은 효과도 p가 극단적으로 작아짐
+- 그래서 GWAS 결과 표에는 **OR(또는 β)과 95% 신뢰구간, 대립유전자 빈도**를 p와 함께 적음
+- GWAS가 쓰는 유의수준 5 × 10⁻⁸은 SNP 수백만 개를 검정하기 때문 → [10장](10_multiple_testing.qmd)
 :::
+
+## 3) 실습 4: 칸이 작으면 Fisher exact
+
+- 표적 항암제 반응군 8명, 비반응군 8명에서 특정 유전자 변이의 유무
+- 참값: 변이 비율 반응군 0.7, 비반응군 0.1
+
+```{r}
+#| label: ex4
+set.seed(1)
+mut <- c(rbinom(8, 1, 0.7), rbinom(8, 1, 0.1))
+tab4 <- table(response = rep(c("responder", "non-responder"), each = 8),
+              mutation = factor(mut, levels = c(1, 0), labels = c("mut", "wt")))
+tab4 <- tab4[c("responder", "non-responder"), ]
+tab4
+chisq.test(tab4)$expected       # 변이 없음일 때 기대 개수
+fisher.test(tab4)
+```
+
+- 기대 개수가 5보다 작은 칸이 있음 → 카이제곱의 근사가 부정확 → **Fisher exact test** (가능한 모든 표를 직접 셈, [6장](06_hypothesis_testing.qmd)의 permutation과 같은 생각)
+- 반응군 5/8, 비반응군 0/8이 변이 → p = 0.026
+- 비반응군에 변이가 하나도 없어서 OR = ∞ → 이런 표는 **개수 자체를 함께 보고**
+
+# 5. 짝지은 데이터
+
+## 1) 실습 5: 종양 vs 인접 정상 조직
+
+- 환자 8명에게서 종양과 바로 옆 정상 조직을 함께 떼어 발현을 잼
+- 환자마다 기본 발현 수준이 크게 다름(SD 1.0), 종양은 같은 환자의 정상보다 0.5 높음
+
+```{r}
+#| label: ex5-data
+set.seed(5)
+patient <- rnorm(8, mean = 6, sd = 1.0)                  # 환자별 기본 수준
+normal  <- round(patient + rnorm(8, 0, 0.3), 2)
+tumor   <- round(patient + 0.5 + rnorm(8, 0, 0.3), 2)
+rbind(normal, tumor, diff = tumor - normal)
+```
+
+```{r}
+#| label: ex5-test
+c(unpaired = t.test(tumor, normal)$p.value,
+  paired   = t.test(tumor, normal, paired = TRUE)$p.value,
+  one_sample_on_diff = t.test(tumor - normal)$p.value,     # paired = 차이의 one-sample t
+  wilcoxon_signed    = wilcox.test(tumor, normal, paired = TRUE)$p.value)
+t.test(tumor, normal)$conf.int
+t.test(tumor, normal, paired = TRUE)$conf.int
+```
+
+```{r}
+#| label: fig-ex5
+#| fig-cap: "실습 5. 환자 8명의 정상-종양 발현. 선은 같은 환자"
+#| fig-height: 3.5
+plot(NA, xlim = c(0.7, 2.3), ylim = range(c(normal, tumor)), xaxt = "n", las = 1,
+     xlab = "", ylab = "발현 (log2)")
+axis(1, at = 1:2, labels = c("정상", "종양"))
+segments(1, normal, 2, tumor, col = "grey70", lwd = 2)
+points(rep(1, 8), normal, pch = 19, col = "grey50")
+points(rep(2, 8), tumor, pch = 19, col = "#5B4D80")
+```
+
+| 분석 | p | 차이의 95% CI |
+|---|---|---|
+| 짝 무시 (Welch) | 0.23 | (−0.45, 1.70) |
+| paired t-검정 | **0.007** | (0.23, 1.02) |
+
+- 짝을 무시하면 환자 사이의 큰 차이(SD 1.0)가 그대로 잡음이 되어 p = 0.23
+- 짝을 쓰면 환자마다 **종양 − 정상** 차이만 봄 → 환자 차이가 지워짐 → p = 0.007, 신뢰구간이 참값 0.5를 포함하면서 0은 제외
+- 그림의 선이 거의 다 오른쪽 위로 → 같은 환자 안에서는 일관되게 올라감
+- [7장](07_power.qmd)의 "변동을 줄이는 설계"가 바로 이것
+
+## 2) 실습 6: 같은 시료를 두 방법으로 — McNemar
+
+- 종양 200개에서 같은 변이를 NGS 패널과 ddPCR로 각각 검사
+- 두 검사의 양성 비율이 다른가?
+
+```{r}
+#| label: ex6
+set.seed(3)
+truth <- rbinom(200, 1, 0.3)                                   # 실제 변이 보유
+ngs   <- ifelse(truth == 1, rbinom(200, 1, 0.80), rbinom(200, 1, 0.01))
+ddpcr <- ifelse(truth == 1, rbinom(200, 1, 0.98), rbinom(200, 1, 0.01))
+tab6 <- table(NGS   = factor(ngs,   levels = 1:0, labels = c("+", "-")),
+              ddPCR = factor(ddpcr, levels = 1:0, labels = c("+", "-")))
+tab6
+mcnemar.test(tab6)
+```
+
+- 같은 시료를 두 번 검사했으므로 두 열은 독립이 아님 → 카이제곱이 아니라 McNemar
+- 두 검사가 **일치한** 시료(++와 −−)는 차이에 대한 정보가 없음
+- **불일치한** 시료만 봄: ddPCR만 양성 16개 vs NGS만 양성 2개 → p = 0.002
+- → NGS가 변이를 더 많이 놓침 (참값: 민감도 80% vs 98%)
+
+# 6. count 자료는?
+
+- RNA-seq의 raw count는 정규도 아니고 분산이 평균에 따라 커짐 ([3장](03_distributions.qmd))
+- 유전자마다 t-검정을 그대로 쓰기보다 count에 맞는 모형을 씀
+
+| 방법 | 자료 | 핵심 |
+|---|---|---|
+| DESeq2, edgeR | raw count | 유전자별 음이항 모형, dispersion을 유전자끼리 빌려 추정 ([11장](11_bayes_intro.qmd)) |
+| limma-voom | log CPM | 평균-분산 관계로 가중치를 준 선형모형 + t-검정 |
+| Wilcoxon | 단일세포 log 발현 | 세포가 많을 때 마커 유전자 찾기에 흔히 씀 (반복 단위 주의, [0장](00_why_statistics.qmd)) |
+
+- 어떤 방법이든 유전자 수천 개를 검정하므로 [10장](10_multiple_testing.qmd)의 다중검정 보정이 따라옴
+
+# 7. 정리
+
+- 검정은 결과 변수의 종류, 그룹 수, 짝 여부, 분포 가정으로 고름
+- 깨끗한 정규 자료에서는 t와 Wilcoxon의 결론이 같고, 이상치가 있으면 Wilcoxon이 버팀
+- 3그룹 이상은 ANOVA로 한 번에 검정하고 보정한 사후 검정. 유전형처럼 순서가 있으면 회귀
+- 범주형은 카이제곱, 칸이 작으면 Fisher. 효과크기는 odds ratio와 신뢰구간으로
+- p-value만으로는 효과크기를 알 수 없음 — 큰 GWAS의 작은 p는 작은 OR일 수 있음
+- 짝지은 자료는 짝을 쓰는 검정(paired t, Wilcoxon 부호순위, McNemar)으로 — 개체 차이가 지워져 검정력이 크게 오름
+
+# 연습문제
+
+1. `wilcox.test(1:3, 4:6)`의 p-value는 얼마인가? 그룹당 3마리 실험에서 Wilcoxon으로는 p < 0.05가 나올 수 있는가? 그룹당 몇 마리부터 가능한지 찾아보라.
+2. 실습 2의 자료로 AA와 GG만 골라 `t.test()`를 하면 p는 얼마인가? Holm 보정한 사후 검정의 p와 왜 다른지 설명하라.
+3. 실습 3의 small 연구(참 OR 1.5)가 검정력 80%를 가지려면 그룹당 몇 명이 필요한가? `gwas()`를 반복하는 시뮬레이션으로 찾아보라 ([7장](07_power.qmd) 방식).
+4. 어떤 논문이 실습 5와 같은 설계(환자별 종양-정상)인데 짝을 무시한 두 표본 t-검정으로 "차이 없음(p = 0.2)"이라고 보고했다. 리뷰어로서 어떤 의견을 쓰겠는가?
