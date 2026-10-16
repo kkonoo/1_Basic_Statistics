@@ -9,7 +9,18 @@ format:
       text: |
         <meta name="ai-title" content="10. 다중검정">
         <meta name="ai-context" content="
-        이 챕터는 2만 개 유전자를 검정하면 — p-value histogram, Bonferroni, FDR를 다룹니다. (초안 작성 전)
+        이 챕터는 유전자 수만 개를 검정할 때의 가짜 발견, p-value histogram 읽기, FWER과 Bonferroni·Holm, FDR과 Benjamini-Hochberg(BH), 상황별 보정 방법을 다룹니다.
+        가상의 RNA-seq(set.seed(20261026)): 유전자 20000개, 마우스 Chow 6 + HFD 6, 진짜 DE 2000개(10%, 차이 ±1.5), 나머지 18000개는 변화 없음, SD 0.8. 유전자마다 등분산 t-검정.
+        p < 0.05로 고르면 2615개 발견, 진짜 1685, 가짜 930(변화 없는 유전자의 약 5%)으로 목록의 36%가 가짜입니다. 2장의 드문 질병 검사와 같은 구조입니다.
+        효과 없는 m개를 α = 0.05로 검정할 때 적어도 하나 가짜일 확률 1 - 0.95^m은 m = 10이면 0.40, 100이면 0.99, 20000이면 거의 1.
+        p-value histogram: 평평한 바닥(변화 없음, 균일분포) + 0 근처 솟음(신호). 바닥 높이로 추정한 π0 = 2 × mean(p > 0.5) = 0.895(참값 0.9). 가운데·오른쪽이 불룩하면 가정 위반, 전체가 0 쪽으로 기울면 batch·교란·의사반복, 1에 솟으면 낮은 count.
+        FWER = 가짜가 하나라도 나올 확률. Bonferroni는 α/m = 2.5e-6 기준으로 6개 발견(모두 진짜), Holm도 6개. 효과 없는 세계 100번(set.seed(3))에서 보정 없이는 100번 모두 가짜 발견, Bonferroni는 8번. GWAS 5e-8은 0.05/100만.
+        FDR = 발견 목록 속 가짜 비율의 기대값. BH: p를 정렬해 p(k) ≤ (k/m)q인 가장 큰 k까지 발견. 이 자료에서 k = 428, p 기준 0.0011, p.adjust(p, 'BH') < 0.05와 같습니다.
+        방법별 발견/진짜/가짜/가짜 비율: 보정 없음 2615/1685/930/0.356, Bonferroni 6/6/0/0, BH q < 0.05 428/406/22/0.051, BH q < 0.10 942/843/99/0.105.
+        같은 실험 20번(set.seed(2))에서 BH 목록의 가짜 비율은 0.026-0.066, 평균 0.046으로 이론값 π0 × q = 0.045와 맞습니다. FDR은 평균입니다.
+        FDR은 목록 전체에 대한 말이지 유전자 하나가 가짜일 확률이 아닙니다. p를 본 뒤 거르고 다시 보정하면 FDR이 깨지지만, 발현량처럼 p와 무관한 기준으로 미리 거르는 independent filtering은 괜찮습니다. Storey q-value는 π0를 추정해 BH보다 조금 더 찾습니다.
+        선택: 미리 정한 소수 비교는 Holm/Bonferroni, ANOVA 사후 검정은 Holm, 유전자 스크리닝은 BH(DESeq2 padj, limma adj.P.Val), GWAS는 5e-8.
+        모든 실습은 base R로 합니다.
         ">
 ---
 
@@ -19,12 +30,263 @@ format:
 - DALS Inference for High Dimensional Data — 목차 참고
 :::
 
-::: {.callout-warning}
-## 작성 예정
-이 장은 아직 쓰는 중입니다. 다룰 내용:
+::: {.callout-important collapse="true"}
+## 실습 자료 — 유전자 2만 개, 마우스 6 + 6마리
 
-1. 유전자 2만 개를 p < 0.05로 검정하면 몇 개가 우연히 걸릴까
-2. p-value histogram 읽기
-3. FWER과 Bonferroni
-4. FDR과 Benjamini-Hochberg, q-value
+- [6장](06_hypothesis_testing.qmd)의 실험을 유전자 2만 개로 넓힌 가상의 RNA-seq (log2 발현)
+- **어느 유전자가 진짜로 변했는지 알고 있으므로** 발견 목록을 채점할 수 있음
+
+| 항목 | 참값 |
+|---|---|
+| 유전자 수 m | 20,000 |
+| 진짜로 변한 유전자 (DE) | 처음 2,000개 (10%) |
+| 변하지 않은 유전자 | 18,000개 (90%) |
+| DE 유전자의 차이 | ±1.5 (방향은 무작위) |
+| 표준편차 | 0.8 (모든 유전자) |
+| 마우스 | Chow 6, HFD 6 |
+
+- 자료는 장 안에서 바로 만듦 (`set.seed(20261026)`)
 :::
+
+```{r}
+#| label: setup
+sim_genes <- function(m = 20000, m_de = 2000, effect = 1.5, sd = 0.8) {
+  x <- matrix(rnorm(m * 12, mean = 5, sd = sd), nrow = m)   # 행 = 유전자, 열 = 마우스
+  direction <- sample(c(-1, 1), m_de, replace = TRUE)
+  de <- seq_len(m_de)                                       # 처음 m_de개 유전자
+  x[de, 7:12] <- x[de, 7:12] + direction * effect           # 7–12열 = HFD
+  x
+}
+row_t_p <- function(x) {          # 유전자마다 등분산 t-검정 (6장 5절 공식을 행 단위로)
+  a <- x[, 1:6]; b <- x[, 7:12]
+  ma <- rowMeans(a); mb <- rowMeans(b)
+  sp2 <- (rowSums((a - ma)^2) + rowSums((b - mb)^2)) / 10
+  t <- (mb - ma) / sqrt(sp2 * (1/6 + 1/6))
+  2 * pt(-abs(t), df = 10)
+}
+
+set.seed(20261026)
+x     <- sim_genes()
+is_de <- rep(c(TRUE, FALSE), times = c(2000, 18000))    # 참값
+p     <- row_t_p(x)
+
+c(row_t_p = p[1], t.test = t.test(x[1, 7:12], x[1, 1:6], var.equal = TRUE)$p.value)  # 같은 값
+```
+
+# 1. 유전자 2만 개를 p < 0.05로 검정하면
+
+## 1) 발견 목록을 채점
+
+```{r}
+#| label: raw
+score <- function(found) c(found = sum(found), true = sum(found & is_de),
+                           false = sum(found & !is_de),
+                           false_ratio = sum(found & !is_de) / max(1, sum(found)))
+score(p < 0.05)
+```
+
+| | p < 0.05 (발견) | p ≥ 0.05 | 합 |
+|---|---|---|---|
+| 진짜 DE | 1,685 | 315 | 2,000 |
+| 변화 없음 | **930** | 17,070 | 18,000 |
+| 합 | 2,615 | 17,385 | 20,000 |
+
+- 변하지 않은 18,000개 중 약 5%인 **930개가 p < 0.05** — [6장](06_hypothesis_testing.qmd) 7절의 "효과가 없으면 p는 균일분포" 그대로
+- 발견 목록 2,615개 중 **36%가 가짜**
+- [2장](02_probability.qmd)의 드문 질병 검사와 같은 구조: 진짜 DE가 드물수록 목록 속 가짜 비율이 커짐
+
+## 2) 적어도 하나가 가짜일 확률
+
+- 효과 없는 유전자 m개를 각각 α = 0.05로 검정할 때 **적어도 하나** 가짜 발견이 나올 확률
+
+$$1 - (1 - 0.05)^m$$
+
+| m | 1 | 10 | 100 | 20,000 |
+|---|---|---|---|---|
+| 적어도 하나 가짜 | 0.05 | 0.40 | 0.99 | ≈ 1 |
+
+- 유전자 2만 개면 가짜 발견은 **확실히** 생김. 문제는 몇 개, 어떤 비율인가
+
+# 2. p-value histogram 읽기
+
+```{r}
+#| label: fig-phist
+#| fig-cap: "유전자 2만 개의 p-value. 회색 점선: 변화 없는 유전자만 있었다면 기대되는 높이"
+#| fig-height: 3.5
+pi0_hat <- 2 * mean(p > 0.5)        # 0.5 위쪽은 거의 변화 없는 유전자 → 평평한 높이로 비율 추정
+pi0_hat
+hist(p, breaks = seq(0, 1, by = 0.025), col = "#5B4D80", border = "white", las = 1,
+     main = "", xlab = "p-value", ylab = "유전자 수")
+abline(h = pi0_hat * 20000 / 40, lty = 2, col = "grey40")    # 막대 40개
+```
+
+- 분석 결과를 받으면 **가장 먼저** 그려 볼 그림
+- 평평한 바닥 = 변화 없는 유전자 (균일분포)
+- 0 근처의 솟은 부분 = 진짜 신호
+- 바닥 높이로 변화 없는 유전자의 비율 $\pi_0$를 추정: 0.895 (참값 0.9)
+
+| 모양 | 뜻 | 확인할 것 |
+|---|---|---|
+| 평평한 바닥 + 0에서 솟음 | 정상. 신호가 있음 | — |
+| 완전히 평평 | 신호가 거의 없음 | 검정력 ([7장](07_power.qmd)) |
+| 0 근처 대신 가운데나 오른쪽이 불룩 | 검정의 가정이 틀림 (분산을 과대추정 등) | 모형, 정규화 |
+| 전체가 0 쪽으로 기울어짐 | 가짜 신호가 많음 | batch·교란 ([9장](09_correlation_regression.qmd)), 의사반복 ([0장](00_why_statistics.qmd)) |
+| 1에 막대가 솟음 | count가 아주 낮은 유전자 (이산적 검정) | 낮은 발현 유전자 필터링 |
+
+# 3. FWER과 Bonferroni
+
+## 1) FWER
+
+- **FWER (family-wise error rate)** = 검정 전체에서 가짜 발견이 **하나라도** 나올 확률
+- Bonferroni: 각 검정을 $\alpha / m$로 검정 → FWER ≤ α
+
+```{r}
+#| label: bonferroni
+0.05 / 20000                                   # 유전자별 기준
+score(p < 0.05 / 20000)
+score(p.adjust(p, method = "bonferroni") < 0.05)   # 같은 결과 (p에 m을 곱해 0.05와 비교)
+score(p.adjust(p, method = "holm") < 0.05)         # Holm: Bonferroni보다 항상 같거나 많이 찾음
+```
+
+- 기준 p < 2.5 × 10⁻⁶ → 가짜는 0개지만 진짜 2,000개 중 **6개만** 찾음
+- 하나도 틀리면 안 되는 상황에는 맞지만, 탐색적 스크리닝에는 너무 엄격
+
+## 2) 효과 없는 세계에서 확인
+
+```{r}
+#| label: fwer-null
+set.seed(3)
+fwer <- replicate(100, {
+  pp <- row_t_p(sim_genes(m_de = 0))          # 모든 유전자가 변화 없음
+  c(raw_any = any(pp < 0.05), bonf_any = any(pp < 0.05 / 20000))
+})
+rowMeans(fwer)                                 # 100번 실험 중 가짜가 하나라도 나온 비율
+```
+
+- 보정 없이: 100번 모두 가짜 발견이 있음
+- Bonferroni: 100번 중 8번 → FWER ≈ 0.05 (100번이라 이 정도 흔들림)
+
+::: {.callout-tip}
+## GWAS의 5 × 10⁻⁸
+- 유럽인 유전체에서 서로 독립적인 흔한 변이가 약 100만 개라는 추정 → 0.05 / 10⁶ = 5 × 10⁻⁸
+- 즉 GWAS의 유의수준은 Bonferroni 기준 ([8장](08_test_map.qmd) 4절)
+:::
+
+# 4. FDR과 Benjamini-Hochberg
+
+## 1) FDR
+
+- **FDR (false discovery rate)** = 발견 목록 속 가짜의 **기대** 비율
+
+$$\text{FDR} = E\left[\frac{\text{가짜 발견 수}}{\text{발견 수}}\right]$$
+
+- FWER은 "가짜가 하나라도 있으면 실패", FDR은 "가짜가 섞여도 되지만 비율은 관리"
+- 후속 실험으로 검증할 후보를 고르는 오믹스 스크리닝에 맞는 기준
+
+## 2) BH 방법
+
+1. p-value를 작은 것부터 줄 세움: $p_{(1)} \le p_{(2)} \le \dots \le p_{(m)}$
+2. $p_{(k)} \le \dfrac{k}{m}\,q$를 만족하는 **가장 큰 k**를 찾음
+3. 1등부터 k등까지를 발견으로 선언
+
+```{r}
+#| label: bh-manual
+q_level <- 0.05
+o <- order(p)
+k <- max(which(p[o] <= (1:20000) / 20000 * q_level))
+k                                   # 발견 수
+p[o][k]                             # 실제로 쓰인 p 기준
+
+q_bh <- p.adjust(p, method = "BH")  # BH 보정 p (흔히 q-value, DESeq2의 padj)
+sum(q_bh < 0.05)                    # 손으로 한 결과와 같음
+```
+
+```{r}
+#| label: fig-bh
+#| dev: "png"
+#| fig-cap: "가장 작은 p-value 1000개. 보라 선: BH 기준 (k/m) × 0.05, 회색 점선(수평): Bonferroni 기준, 회색 파선(수직): BH 발견 수 k. 회색 점: 진짜 DE, 검은 ×: 변화 없는 유전자(가짜)"
+#| fig-height: 4
+top <- o[1:1000]
+par(mar = c(4, 5.5, 1, 1))
+plot(1:1000, p[top], log = "y", type = "n", las = 1, xlab = "순위 k", ylab = "")
+title(ylab = "p-value (로그 척도)", line = 4.3)
+points(which(is_de[top]), p[top][is_de[top]], pch = 19, cex = 0.6, col = "grey70")     # 진짜 DE
+points(which(!is_de[top]), p[top][!is_de[top]], pch = 4, cex = 0.7, col = "black")    # 변화 없음
+lines(1:1000, (1:1000) / 20000 * q_level, col = "#5B4D80", lwd = 2)   # BH 기준
+abline(h = 0.05 / 20000, lty = 3, col = "grey40")                      # Bonferroni 기준
+abline(v = k, lty = 2, col = "grey40")
+```
+
+- BH 기준선은 순위에 비례해 **올라감** → Bonferroni(수평선)보다 너그러움
+- p 기준이 고정이 아니라 **자료에 따라** 정해짐 (이 자료에서는 p ≤ 0.0011, 428개)
+
+## 3) 방법별 채점
+
+```{r}
+#| label: compare
+rbind(raw_0.05   = score(p < 0.05),
+      bonferroni = score(p.adjust(p, "bonferroni") < 0.05),
+      BH_0.05    = score(q_bh < 0.05),
+      BH_0.10    = score(q_bh < 0.10))
+```
+
+| 방법 | 발견 | 진짜 | 가짜 | 목록 속 가짜 비율 |
+|---|---|---|---|---|
+| 보정 없음, p < 0.05 | 2,615 | 1,685 | 930 | 0.356 |
+| Bonferroni | 6 | 6 | 0 | 0 |
+| BH, q < 0.05 | 428 | 406 | 22 | **0.051** |
+| BH, q < 0.10 | 942 | 843 | 99 | 0.105 |
+
+- BH q < 0.05: 가짜 비율이 약 5%로 관리되면서 Bonferroni보다 훨씬 많이 찾음
+- 기준을 0.10으로 올리면 더 찾지만 가짜 비율도 약 10%
+
+## 4) FDR은 "평균"이다
+
+- 같은 실험을 20번 반복하면 BH 목록의 가짜 비율은 실험마다 다름
+
+```{r}
+#| label: fdr-repeat
+set.seed(2)
+fdp <- replicate(20, {
+  qq <- p.adjust(row_t_p(sim_genes()), "BH")
+  found <- qq < 0.05
+  c(found = sum(found), false_ratio = sum(found & !is_de) / max(1, sum(found)))
+})
+round(range(fdp["false_ratio", ]), 3)    # 실험마다의 가짜 비율 범위
+round(mean(fdp["false_ratio", ]), 3)     # 평균
+```
+
+- 실험마다 0.026–0.066, 평균 0.046 ≤ 0.05
+- 이론적으로 BH의 FDR = $\pi_0 \times q$ = 0.9 × 0.05 = 0.045
+
+::: {.callout-warning}
+## FDR을 읽는 법
+- "q < 0.05인 유전자 목록에서 **평균적으로** 5% 이하가 가짜" — 목록 전체에 대한 말
+- "이 유전자가 가짜일 확률이 5%"가 **아님** — 목록 맨 아래(q가 0.05에 가까운) 유전자는 맨 위보다 가짜일 가능성이 훨씬 큼
+- p-value를 본 **뒤에** 유전자를 걸러내고 다시 보정하면 FDR이 깨짐. 발현량처럼 p와 무관한 기준으로 **미리** 거르는 것(DESeq2의 independent filtering)은 괜찮음
+- Storey의 q-value는 $\pi_0$를 추정해 BH보다 조금 더 찾음 (BH는 $\pi_0 = 1$로 보수적으로 가정)
+:::
+
+# 5. 무엇을 쓸까
+
+| 상황 | 방법 | R |
+|---|---|---|
+| 미리 정한 비교 몇 개, 하나도 틀리면 안 됨 | Holm (또는 Bonferroni) | `p.adjust(p, "holm")` |
+| ANOVA 뒤의 쌍별 사후 검정 | Holm 등 | `pairwise.t.test(..., p.adjust.method = "holm")` ([8장](08_test_map.qmd)) |
+| 유전자 수천 개 스크리닝, 후속 검증 | BH FDR | `p.adjust(p, "BH")`, DESeq2·limma의 `padj`·`adj.P.Val` |
+| GWAS | 5 × 10⁻⁸ | — |
+
+# 6. 정리
+
+- 유전자 2만 개를 p < 0.05로 검정하면 효과 없는 유전자의 약 5%가 걸림 → 이 자료에서 목록의 36%가 가짜
+- p-value histogram을 먼저 그림: 평평한 바닥(변화 없음) + 0의 솟음(신호). 바닥 높이로 $\pi_0$ 추정
+- FWER(하나라도 가짜) → Bonferroni·Holm. 엄격해서 놓치는 것이 많음
+- FDR(목록 속 가짜 비율의 평균) → BH. 오믹스 스크리닝의 기본
+- FDR은 목록 전체의 평균 비율이지 유전자 하나의 확률이 아님
+
+# 연습문제
+
+1. `sim_genes(m_de = 200)`으로 진짜 DE를 1%로 줄이고 1절을 다시 하라. p < 0.05 목록 속 가짜 비율은? BH q < 0.05 목록은? [2장](02_probability.qmd)의 유병률 이야기와 연결해 설명하라.
+2. 마우스를 그룹당 12마리로 늘리면 BH 발견 수는 어떻게 바뀌는가? (`sim_genes()`와 `row_t_p()`를 12 + 12마리용으로 고쳐 보라)
+3. `p.adjust(p, "holm")`과 `p.adjust(p, "bonferroni")`의 발견 수를 비교하라. 왜 Holm이 항상 같거나 더 많이 찾는가?
+4. 동료의 RNA-seq 결과에서 p-value histogram이 0.5 근처가 불룩하고 0 근처는 오히려 낮다. 무엇을 의심하고 무엇을 확인하겠는가?

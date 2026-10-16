@@ -40,7 +40,7 @@ format:
 | | [7](chapters/07_power.qmd) | 오류와 검정력 | 초안 |
 | | [8](chapters/08_test_map.qmd) | 검정 지도와 실습 | 초안 |
 | **4** 다음 단계로 | [9](chapters/09_correlation_regression.qmd) | 상관과 회귀 입문 | 초안 |
-| | [10](chapters/10_multiple_testing.qmd) | 다중검정 | 작성 예정 |
+| | [10](chapters/10_multiple_testing.qmd) | 다중검정 | 초안 |
 | | [11](chapters/11_bayes_intro.qmd) | 베이지안 맛보기 | 작성 예정 |
 
 # 이 사이트 읽는 법
