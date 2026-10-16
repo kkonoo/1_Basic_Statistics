@@ -9,24 +9,500 @@ format:
       text: |
         <meta name="ai-title" content="1. 데이터의 종류와 요약">
         <meta name="ai-context" content="
-        이 챕터는 count·연속형·범주형 데이터, 평균·분산·중앙값, 분포를 눈으로 보기를 다룹니다. (초안 작성 전)
+        이 챕터는 데이터의 종류, 중심(평균, 중앙값)과 퍼짐(분산, 표준편차, IQR)의 요약, 자유도, 분포 그림(histogram, boxplot, QQ plot), 이상치에 강한 요약을 다룹니다.
+        자료 A는 가상의 마우스 40마리(일반식 Chow 20, 고지방식 HFD 20)입니다(set.seed(20261018)).
+        변수는 식이(범주형), 체중(연속형, 참 평균 30 / 38 g, 참 SD 3), 지방간 등급 0-3(순서형), 간 Cd36 read count(count)입니다.
+        지방간 등급 분포는 Chow 0등급 14, 1등급 3, 2등급 3, 3등급 0마리, HFD 3, 4, 10, 3마리입니다.
+        체중 관측 평균은 Chow 30.19, HFD 37.89 g, 중앙값 30.2, 37.9 g, 표준편차 2.15, 3.42 g입니다.
+        Cd36 count 평균은 Chow 113.7, HFD 235.5, 분산은 2677, 14303으로 분산이 평균의 24배, 61배입니다(과산포).
+        숫자로 적힌 등급이나 batch 번호는 연속형이 아니므로 factor로 다뤄야 합니다.
+        자료 B는 HFD 마우스 한 마리 간의 유전자 5000개 read count입니다(참 중앙값 50, 참 평균 약 369, log 척도 SD 2).
+        관측 평균 367.8, 중앙값 53으로 평균이 중앙값의 약 7배이고, Q1 14, Q3 198, IQR 184, 최댓값 133900입니다. 평균이 Q3보다 큽니다.
+        상위 10% 유전자가 전체 read의 75%를 가져갑니다. log2(count + 1)의 평균을 원래 척도로 되돌리면 54.6으로 중앙값 근처입니다(기하평균).
+        표본분산을 n-1로 나누는 이유: 마우스 6마리, 참 평균 5.0, 참 SD 0.8(참 분산 0.64)에서 1만 번 시뮬레이션하면(set.seed(1))
+        표본평균 기준 제곱합을 n으로 나눈 값의 평균 0.538, n-1로 0.645, n-2로 0.806, 참 평균 기준으로 n으로 나누면 0.645입니다.
+        표본평균은 제곱합을 최소로 만드는 값이라 표본평균 기준 제곱합이 늘 작습니다. 예시 표본(set.seed(4))에서 표본평균 5.46 기준 제곱합 1.67, 참 평균 5.0 기준 2.97입니다.
+        편차의 합은 항상 0이라 자유롭게 움직이는 편차는 n-1개이고 이것이 자유도입니다. 자유도 = 자료 수 - 자료에서 추정한 평균(모수)의 수.
+        두 그룹(6 + 6마리, set.seed(2))이면 평균을 2개 추정하므로 12, 11, 10으로 나눈 값의 평균이 0.531, 0.580, 0.638로 n-2가 맞습니다(6장 t-검정 자유도 10, 9장 회귀의 n-2).
+        n으로 나눈 분산은 참값의 (n-1)/n배라 n = 3이면 0.67, n = 6이면 0.83, n = 100이면 0.99배입니다.
+        count는 원래 척도 histogram에서 모양이 안 보이고 log2(count + 1)에서 종 모양에 가깝습니다. QQ plot에서 원래 척도 count는 오른쪽 끝이 치솟고 log2 count는 직선에 가깝습니다.
+        이상치: HFD 체중 40.7을 407로 잘못 입력하면 평균 37.9에서 56.2, SD 3.4에서 82.6(약 24배)으로 바뀌지만 중앙값 37.9, MAD 3.6은 그대로이고 IQR은 4.5에서 4.7입니다.
+        MAD = 1.4826 × 중앙값에서 떨어진 거리의 중앙값이며, 정규분포에서 SD와 같은 크기입니다. 이상치는 지우기 전에 이유를 확인합니다.
+        모든 실습은 base R로 합니다.
         ">
 ---
 
 ::: {.callout-note collapse="true"}
 ## 원자료
-- dsbook `dataviz/distributions.Rmd` — 구조 참고
-- DALS Exploratory Data Analysis — 목차 참고
+- dsbook `dataviz/distributions.Rmd` — 구조 참고 (변수의 종류 → 분포 요약 → boxplot·QQ plot 순서)
+- DALS *Exploratory Data Analysis* — 목차 참고 (QQ plot, boxplot, robust summary)
+- 내 공부 노트 — "표본분산은 왜 N-1로 나누나" 질문을 "처음엔 여기서 헷갈려요" 상자로
+- 예제는 마우스 실험과 유전자 count로 새로 만들고, 문장·코드는 새로 씀
 :::
+
+::: {.callout-important collapse="true"}
+## 실습 자료 — 고지방식 마우스 40마리, 유전자 5000개
+
+- 가상의 자료 두 가지. 참값을 정해 두고 만들었으므로 **요약값이 참값에 얼마나 가까운지 채점할 수 있음**
+
+**자료 A: 마우스 코호트** (`mice`) — 일반식(Chow) 20마리, 고지방식(HFD) 20마리
+
+| 변수 | 내용 | 참값 (Chow / HFD) |
+|---|---|---|
+| `diet` | 식이 | 20마리 / 20마리 |
+| `weight` | 체중 (g) | 평균 30 / 38, 표준편차 3 (정규분포) |
+| `grade` | 지방간 등급 0–3 | 등급 0·1·2·3의 확률 0.6·0.3·0.1·0 / 0.1·0.3·0.4·0.2 |
+| `cd36` | 간 *Cd36*의 read count | 기준 수준 100 / 200, 마우스마다 log 척도 SD 0.4로 흔들림 ([0장](00_why_statistics.qmd)과 같은 방식) |
+
+**자료 B: 유전자 count** (`genes`) — HFD 마우스 한 마리의 간 RNA-seq, 유전자 5000개의 read count
+
+| 항목 | 참값 |
+|---|---|
+| 유전자별 발현 수준 | log 척도 정규분포 (중앙값 50 read, log SD 2) |
+| 참 중앙값 | 50 |
+| 참 평균 | 약 369 (= 50 × e²) |
+
+- 자료는 장 안에서 바로 만듦 (`set.seed(20261018)`)
+:::
+
+```{r}
+#| label: setup-data
+set.seed(20261018)
+
+# 자료 A: 마우스 40마리
+diet   <- factor(rep(c("Chow", "HFD"), each = 20))
+is_hfd <- diet == "HFD"
+weight <- round(rnorm(40, mean = ifelse(is_hfd, 38, 30), sd = 3), 1)
+grade  <- ifelse(is_hfd,                       # 지방간 등급 0–3
+  sample(0:3, 40, replace = TRUE, prob = c(0.1, 0.3, 0.4, 0.2)),
+  sample(0:3, 40, replace = TRUE, prob = c(0.6, 0.3, 0.1, 0.0)))
+# 마우스별 참 수준에서 시퀀싱 (0장과 같은 방식)
+level  <- ifelse(is_hfd, 200, 100) * exp(rnorm(40, 0, 0.4))
+cd36   <- rpois(40, level)
+
+mice <- data.frame(id = sprintf("M%02d", 1:40), diet, weight,
+  grade = factor(grade, levels = 0:3, ordered = TRUE), cd36)
+
+# 자료 B: 유전자 5000개의 read count
+genes <- rpois(5000, exp(rnorm(5000, mean = log(50), sd = 2)))
+```
+
+# 1. 데이터의 종류
+
+## 1) 네 가지 종류
+
+```{r}
+#| label: str-mice
+head(mice)
+str(mice)
+```
+
+| 종류 | 뜻 | 이 자료에서 | 다른 예 | R에서 |
+|---|---|---|---|---|
+| 범주형 (nominal) | 이름만 있고 순서가 없음 | `diet` | 유전형 WT/KO, 세포 유형, 성별 | `factor` |
+| 순서형 (ordinal) | 순서는 있지만 간격은 모름 | `grade` | 종양 병기, 증상 점수 | `ordered factor` |
+| count (이산형) | 0, 1, 2, …로 세는 값 | `cd36` | UMI 수, 세포 수, SNP 대립유전자 개수 0/1/2 | `integer` |
+| 연속형 (continuous) | 구간 안의 어떤 값이든 가능 | `weight` | log2 CPM, 단백질 농도, 형광 세기 | `numeric` |
+
+- 오믹스에서 가장 흔한 것은 **count** — read, UMI, 세포는 모두 셈
+- count에 log를 씌운 값(log2 CPM)은 연속형처럼 다룸
+
+## 2) 종류가 요약·그림·검정을 정한다
+
+| 종류 | 요약 | 그림 | 검정 ([8장](08_test_map.qmd)) |
+|---|---|---|---|
+| 범주형 | 개수, 비율 | 막대그래프 | 카이제곱, Fisher |
+| 순서형 | 개수, 중앙값 | 막대그래프 | 순위 기반 (Wilcoxon) |
+| count | 평균, 분산, 분산 vs 평균 | histogram | 포아송·음이항 모형 ([3장](03_distributions.qmd)) |
+| 연속형 | 평균·표준편차, 중앙값·IQR | histogram, boxplot | t-검정 ([6장](06_hypothesis_testing.qmd)) |
+
+- 범주형·순서형은 **세어서** 요약
+
+```{r}
+#| label: grade-table
+tab <- table(mice$diet, mice$grade)
+tab
+round(prop.table(tab, margin = 1), 2)   # 식이별 비율 (행의 합 = 1)
+```
+
+```{r}
+#| label: fig-grade
+#| fig-cap: "식이별 지방간 등급. 순서형 자료는 막대그래프로"
+#| fig-height: 3.5
+barplot(tab, beside = TRUE, col = c("grey70", "#5B4D80"), border = NA, las = 1,
+        xlab = "지방간 등급", ylab = "마우스 수",
+        legend.text = TRUE, args.legend = list(x = "topright", bty = "n"))
+```
+
+- Chow는 등급 0에, HFD는 등급 2에 몰림
 
 ::: {.callout-warning}
-## 작성 예정
-이 장은 아직 쓰는 중입니다. 다룰 내용:
-
-1. 데이터의 종류: count, 연속형, 범주형, 순서형
-2. 중심과 퍼짐: 평균, 중앙값, 분산, 표준편차, IQR
-3. 분포 보기: histogram, boxplot, QQ plot
-4. 이상치에 강한 요약 (robust summary)
-
-처음엔 여기서 헷갈려요: 표본분산은 왜 N이 아니라 N-1로 나눌까? 왜 N-2는 아니지? → 자유도
+## 숫자로 적혀 있어도 연속형이 아니다
+- 지방간 등급 0–3: 0→1과 2→3이 **같은 크기의 차이라는 보장이 없음** → "평균 등급 1.6"은 해석하기 어려움
+- batch 1·2·3, 마우스 번호, 레인 번호: 이름표일 뿐
+- R에서 숫자로 두면 모형이 batch 3을 batch 1의 "3배"처럼 다룸 → `factor()`로 바꿀 것
+- 자료를 받으면 `str()`로 각 열의 종류부터 확인
 :::
+
+# 2. 중심: 평균과 중앙값
+
+## 1) 정의
+
+| 요약 | 정의 | R |
+|---|---|---|
+| 평균 (mean) | $\bar{x} = \dfrac{1}{n}\sum_{i=1}^{n} x_i$ | `mean()` |
+| 중앙값 (median) | 크기순으로 세웠을 때 가운데 값 (n이 짝수면 가운데 둘의 평균) | `median()` |
+
+```{r}
+#| label: center-weight
+tapply(mice$weight, mice$diet, mean)
+tapply(mice$weight, mice$diet, median)
+```
+
+- 체중처럼 대칭인 자료: 평균 ≈ 중앙값
+- 참값(30 / 38)과도 가까움
+
+## 2) 치우친 자료: 유전자 5000개
+
+```{r}
+#| label: center-genes
+c(mean = mean(genes), median = median(genes))
+
+top <- sort(genes, decreasing = TRUE)
+sum(top[1:500]) / sum(genes)    # 상위 10% 유전자가 가져간 read 비율
+```
+
+- 평균 367.8, 중앙값 53 → **평균이 중앙값의 약 7배**
+- 상위 10% 유전자(500개)가 전체 read의 75%를 가져감
+- 평균은 소수의 고발현 유전자에 끌려 올라감 (간에서는 알부민 *Alb* 같은 유전자)
+- 참값과 채점: 참 중앙값 50 → 53, 참 평균 369 → 367.8. 둘 다 참값 근처
+
+| 요약 | 이 자료 | 답하는 질문 |
+|---|---|---|
+| 평균 | 367.8 | 전체 read를 유전자 수로 나누면? |
+| 중앙값 | 53 | 전형적인 유전자 하나는 read를 몇 개 받나? |
+
+- 둘 다 맞는 계산이지만 **다른 질문에 답함**
+- "평균적인 유전자"를 말하고 싶다면 치우친 자료에서는 중앙값
+
+::: {.callout-tip}
+## log 척도에서 평균을 내면
+```{r}
+#| label: geo-mean
+2^mean(log2(genes + 1)) - 1    # log2 척도 평균을 원래 척도로 되돌림
+```
+- log 척도에서 평균을 내고 되돌리면 54.6 → 중앙값 53 근처 (기하평균)
+- log 변환이 긴 오른쪽 꼬리를 접어 주기 때문
+- 오믹스에서 발현을 log 척도로 요약·비교하는 이유 중 하나
+:::
+
+# 3. 퍼짐: 분산, 표준편차, IQR
+
+## 1) 분산과 표준편차
+
+$$s^2 = \frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})^2, \qquad s = \sqrt{s^2}$$
+
+- 분산 = 평균에서 떨어진 거리를 **제곱해서** 평균낸 것 (n − 1로 나누는 이유는 4절)
+- 표준편차 (SD) = 분산의 제곱근 → **원자료와 단위가 같음** (분산은 g², SD는 g)
+
+```{r}
+#| label: spread-weight
+tapply(mice$weight, mice$diet, var)
+tapply(mice$weight, mice$diet, sd)
+```
+
+- 참 SD 3과 비교: Chow 2.15, HFD 3.42
+- 20마리로 잰 SD도 참값에서 이만큼 흔들림
+- count는 평균과 분산을 **함께** 봄
+
+```{r}
+#| label: spread-cd36
+tapply(mice$cd36, mice$diet, mean)
+tapply(mice$cd36, mice$diet, var)
+```
+
+- *Cd36* count의 분산이 평균의 24배(Chow), 61배(HFD) → 포아송(분산 ≈ 평균)보다 훨씬 퍼짐
+- 마우스 사이의 생물학적 변동 때문 ([0장](00_why_statistics.qmd)), 이런 count의 분포는 [3장](03_distributions.qmd)
+
+::: {.callout-tip}
+## SD와 SE는 다르다
+- SD: **자료 하나하나**가 평균에서 얼마나 퍼져 있나
+- SE (표준오차): **표본평균**이 표본마다 얼마나 흔들리나 = SD / √n
+- 논문 그림의 오차막대가 어느 쪽인지 꼭 확인 → [4장](04_sampling_clt.qmd)
+:::
+
+## 2) 분위수와 IQR
+
+- 분위수 (quantile): 크기순으로 세웠을 때 p 지점의 값
+  - Q1 = 25%, 중앙값 = 50%, Q3 = 75%
+- IQR (interquartile range) = Q3 − Q1 = **가운데 50%의 폭**
+
+```{r}
+#| label: quantile-genes
+summary(genes)
+IQR(genes)
+```
+
+- 유전자 count: 평균 367.8이 **Q3(198)보다도 큼**
+- → 평균보다 read를 많이 받는 유전자는 25%도 안 됨
+
+| 요약 | 무엇에 좌우되나 | 언제 쓰나 |
+|---|---|---|
+| 평균, SD | 모든 값 (극단값 포함) | 대칭, 이상치 없음 |
+| 중앙값, IQR | 가운데 값들 | 치우침, 이상치 있음 |
+
+# 4. 왜 n − 1로 나누나: 자유도
+
+::: {.callout-warning}
+## 처음엔 여기서 헷갈려요
+- 공부 노트에 남아 있던 질문: **표본분산은 왜 n이 아니라 n − 1로 나눌까? 1을 빼는 거라면 n − 2는 왜 아니지?**
+- 짧은 답: 분산을 재는 기준점(평균)을 **같은 자료에서 추정했기 때문**에 1을 뺌
+- 추정한 평균이 2개면 실제로 n − 2가 맞음 → 4)에서
+:::
+
+## 1) 세 가지로 나눠서 채점하기
+
+- [6장](06_hypothesis_testing.qmd) 실험과 같은 설정: 마우스 6마리, *Cd36* 참 평균 5.0, 참 SD 0.8 → **참 분산 0.64**
+- 6마리를 1만 번 새로 뽑아, 제곱합을 n, n − 1, n − 2로 나눈 값의 평균을 참값과 비교
+
+```{r}
+#| label: df-sim
+set.seed(1)
+n <- 6; mu <- 5.0; sigma <- 0.8
+est <- replicate(10000, {
+  x  <- rnorm(n, mu, sigma)
+  ss <- sum((x - mean(x))^2)                 # 표본평균에서 잰 제곱합
+  c("n" = ss / n, "n-1" = ss / (n - 1), "n-2" = ss / (n - 2),
+    mu_known = sum((x - mu)^2) / n)          # 참 평균을 안다면
+})
+round(rowMeans(est), 3)
+```
+
+| 계산 | 1만 번의 평균 | 참값 0.64와 비교 |
+|---|---|---|
+| 표본평균 기준, n = 6으로 나눔 | 0.538 | 작음 (5/6배) |
+| 표본평균 기준, n − 1 = 5로 나눔 | 0.645 | **맞음** |
+| 표본평균 기준, n − 2 = 4로 나눔 | 0.806 | 큼 (5/4배) |
+| **참 평균** 기준, n = 6으로 나눔 | 0.645 | **맞음** |
+
+- 마지막 줄이 열쇠: 참 평균을 알면 n으로 나눠도 맞음
+- 문제는 n이 아니라 **평균을 자료에서 추정했다는 것**
+
+## 2) 표본평균은 자료 쪽으로 붙는다
+
+- 표본평균 $\bar{x}$는 그 자료의 제곱합 $\sum (x_i - c)^2$을 **가장 작게 만드는 c**
+- 그래서 $\sum (x_i - \bar{x})^2 \le \sum (x_i - \mu)^2$ — 항상
+
+```{r}
+#| label: fig-ss
+#| fig-cap: "마우스 6마리 자료에서 기준점 c에 따른 제곱합. 표본평균(보라)에서 가장 작고, 참 평균 5.0(회색)에서는 더 큼"
+#| fig-height: 3.5
+set.seed(4)
+x6 <- rnorm(6, mean = 5.0, sd = 0.8)
+ss <- function(c0) sapply(c0, function(cc) sum((x6 - cc)^2))
+c(xbar = mean(x6), ss_xbar = ss(mean(x6)), ss_mu = ss(5.0))
+
+curve(ss, from = 3.5, to = 6.5, lwd = 2, col = "grey40", las = 1,
+      xlab = "기준점 c", ylab = "제곱합")
+abline(v = mean(x6), col = "#5B4D80", lwd = 2)
+abline(v = 5.0, col = "grey70", lwd = 2, lty = 2)
+```
+
+- 이 표본: 표본평균 5.46에서 제곱합 1.67, 참 평균 5.0에서 2.97
+- 표본평균 기준 제곱합은 늘 조금 작게 나옴 → n으로 나누면 분산을 **과소추정**
+- 평균적으로 $\sum (x_i - \bar{x})^2$은 $(n-1)\sigma^2$ → n − 1로 나누면 딱 $\sigma^2$
+
+## 3) 자유도: 몇 개가 자유롭게 움직이나
+
+- 편차 $x_i - \bar{x}$의 합은 **항상 0**
+
+```{r}
+#| label: dev-sum
+d <- x6 - mean(x6)
+round(d, 3)
+round(sum(d), 10)
+```
+
+- 편차 5개를 알면 6번째는 자동으로 정해짐 → 자유롭게 움직이는 편차는 n − 1개
+- 이것이 **자유도 (degrees of freedom, df)**
+- 일반 규칙: **자유도 = 자료 수 − 자료에서 추정한 평균(모수)의 수**
+
+| 상황 | 자료에서 추정한 것 | 나누는 수 (자유도) | 이 책 |
+|---|---|---|---|
+| 참 평균을 앎 | 없음 | n | — |
+| 한 그룹의 분산 | 평균 1개 | n − 1 | 이 장 |
+| 두 그룹의 합동분산 | 그룹 평균 2개 | n₁ + n₂ − 2 | [6장](06_hypothesis_testing.qmd) t-검정 (자유도 10) |
+| 단순회귀의 잔차분산 | 절편, 기울기 2개 | n − 2 | [9장](09_correlation_regression.qmd) |
+
+## 4) n − 2가 맞을 때
+
+- 6장 실험처럼 두 그룹(6 + 6마리)이면 각 그룹 평균에서 편차를 잼 → 평균을 2개 추정
+- 12, 11, 10으로 나눠서 채점
+
+```{r}
+#| label: df-pooled
+set.seed(2)
+est2 <- replicate(10000, {
+  a  <- rnorm(6, 5.0, 0.8)     # Chow
+  b  <- rnorm(6, 6.0, 0.8)     # HFD
+  # 각 그룹을 자기 평균에서 잰 제곱합을 더함
+  ss <- sum((a - mean(a))^2) + sum((b - mean(b))^2)
+  c("12" = ss / 12, "11" = ss / 11, "10" = ss / 10)
+})
+round(rowMeans(est2), 3)
+```
+
+- 12 − 2 = 10으로 나눌 때 참값 0.64에 맞음 (0.638)
+- 노트의 질문 "왜 n − 2는 아니지?"에 대한 답: **평균을 2개 추정하면 n − 2가 맞다**
+
+::: {.callout-tip}
+## 실무에서는
+- R의 `var()`, `sd()`는 n − 1로 나눔
+- n으로 나눈 분산은 평균적으로 참값의 (n − 1)/n배: n = 3이면 0.67, n = 6이면 0.83, n = 100이면 0.99
+- 큰 표본에서는 거의 차이 없음. **마우스 3–6마리 실험에서는 중요**
+- 참고: n − 1로 나눈 분산의 제곱근(SD)은 여전히 참 SD보다 조금 작게 나옴 — 실무에서는 무시
+:::
+
+# 5. 분포 보기
+
+## 1) Histogram
+
+```{r}
+#| label: fig-hist-genes
+#| fig-cap: "유전자 5000개의 read count. 왼쪽: 원래 척도, 오른쪽: log2(count + 1)"
+#| fig-height: 3.5
+par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
+hist(genes, breaks = 50, col = "grey70", border = "white", las = 1,
+     main = "read count", xlab = "read count", ylab = "유전자 수")
+lg <- log2(genes + 1)
+hist(lg, breaks = 0:ceiling(max(lg)), col = "#5B4D80", border = "white", las = 1,
+     main = "log2(count + 1)", xlab = "log2(count + 1)", ylab = "유전자 수")
+```
+
+- 원래 척도: 거의 모든 유전자가 첫 막대에 몰리고, 꼬리가 133,900까지 → 모양이 안 보임
+- log2 척도: 종 모양에 가까워짐
+- `+ 1` (pseudocount): count 0이면 log2(0) = −∞가 되므로 1을 더함
+- 막대 폭(`breaks`)에 따라 모양이 달라 보임 → 몇 가지로 바꿔 볼 것
+
+## 2) Boxplot
+
+```{r}
+#| label: fig-box
+#| fig-cap: "식이별 체중. 상자 위에 마우스 한 마리 한 마리를 점으로 함께 그림"
+#| fig-height: 4
+boxplot(weight ~ diet, data = mice, outline = FALSE, col = "white",
+        border = c("grey40", "#5B4D80"), las = 1, xlab = "", ylab = "체중 (g)")
+stripchart(weight ~ diet, data = mice, vertical = TRUE, method = "jitter",
+           pch = 19, col = c("grey70", "#5B4D80"), add = TRUE)
+```
+
+| boxplot 부분 | 뜻 |
+|---|---|
+| 상자 안 굵은 선 | 중앙값 |
+| 상자 아래·위 끝 | Q1, Q3 → 상자 높이 = IQR |
+| 수염 (whisker) | 상자에서 1.5 × IQR 안에 있는 가장 먼 값까지 |
+| 수염 밖의 점 | 이상치 후보 (`outline = TRUE`일 때) |
+
+- 그룹 사이의 중심과 퍼짐을 한눈에 비교할 때 좋음
+
+::: {.callout-tip}
+## 표본이 작으면 점을 함께
+- boxplot은 숫자 5개(최솟값 쪽 수염, Q1, 중앙값, Q3, 최댓값 쪽 수염)로 줄인 그림
+- 마우스 6마리면 상자가 점 몇 개로 정해짐 → **점을 직접 보여 주는 편이 정직함**
+- [6장](06_hypothesis_testing.qmd)의 6 + 6마리 그림은 그래서 점과 평균선으로 그림
+:::
+
+## 3) QQ plot
+
+- 정규분포라면 나와야 할 분위수(가로)와 실제 자료의 분위수(세로)를 짝지어 찍은 그림
+- 점이 **직선 위에** 놓이면 정규분포에 가까움
+- t-검정 같은 방법의 정규성 가정을 눈으로 확인할 때 씀
+
+```{r}
+#| label: fig-qq
+#| dev: "png"
+#| fig-cap: "QQ plot. 왼쪽: Chow 체중(정규분포에서 만듦), 가운데: 유전자 count, 오른쪽: log2(count + 1)"
+#| fig-height: 3.5
+par(mfrow = c(1, 3), mar = c(4, 5.5, 2, 1))
+chow_w <- mice$weight[mice$diet == "Chow"]
+qqnorm(chow_w, pch = 19, col = "#5B4D80", las = 1, main = "Chow 체중 (n = 20)",
+       xlab = "정규분포 분위수", ylab = "자료 분위수")
+qqline(chow_w, col = "grey40", lwd = 2)
+qqnorm(genes, pch = 19, cex = 0.4, col = "#5B4D80", las = 1, main = "read count",
+       xlab = "정규분포 분위수", ylab = "")
+title(ylab = "자료 분위수", line = 4.3)   # 축 제목을 바깥으로
+qqline(genes, col = "grey40", lwd = 2)
+qqnorm(lg, pch = 19, cex = 0.4, col = "#5B4D80", las = 1, main = "log2(count + 1)",
+       xlab = "정규분포 분위수", ylab = "자료 분위수")
+qqline(lg, col = "grey40", lwd = 2)
+```
+
+| 모양 | 뜻 | 이 그림에서 |
+|---|---|---|
+| 직선을 따라감 | 정규분포에 가까움 | Chow 체중, log2 count |
+| 오른쪽 끝이 위로 치솟음 | 오른쪽 꼬리가 김 | 원래 척도 count |
+| 계단 | 값이 띄엄띄엄 (작은 정수) | log2 count의 왼쪽 아래 (count 0, 1, 2, …) |
+
+- n = 20이면 정규분포에서 만든 자료도 직선에서 조금씩 벗어남 → **작은 흔들림에 과민하지 말 것**
+
+# 6. 이상치에 강한 요약
+
+## 1) 소수점 하나가 바꾸는 것
+
+- HFD 마우스 체중을 입력하다가 한 마리의 소수점을 빠뜨렸다고 하자 (40.7 → 407)
+
+```{r}
+#| label: robust
+w     <- mice$weight[mice$diet == "HFD"]
+w_err <- w
+w_err[1] <- w[1] * 10          # 소수점을 빠뜨림
+
+summ <- function(v) c(mean = mean(v), sd = sd(v),
+                      median = median(v), IQR = IQR(v), MAD = mad(v))
+round(rbind(정상 = summ(w), 오류 = summ(w_err)), 1)
+```
+
+| 요약 | 정상 | 값 하나가 틀리면 |
+|---|---|---|
+| 평균 | 37.9 | 56.2 — 실제 어떤 마우스와도 안 맞는 값 |
+| SD | 3.4 | 82.6 — 약 24배 |
+| 중앙값 | 37.9 | 37.9 — 그대로 |
+| IQR | 4.5 | 4.7 |
+| MAD | 3.6 | 3.6 |
+
+- 평균과 SD는 **값 하나로 무너짐**
+- 중앙값은 자료의 절반 가까이가 틀려야 무너짐 → **robust (강건한) 요약**
+
+## 2) MAD
+
+$$\text{MAD} = 1.4826 \times \text{median}\left(|x_i - \text{median}(x)|\right)$$
+
+- 중앙값에서 떨어진 거리의 중앙값
+- 1.4826: 자료가 정규분포면 MAD가 SD와 같은 크기가 되도록 맞춘 상수 (R `mad()`의 기본값)
+- 정상 자료에서 MAD 3.6 ≈ SD 3.4, 오류가 섞여도 MAD는 3.6
+
+::: {.callout-tip}
+## 이상치를 찾았을 때
+- 지우기 전에 **이유부터** 확인
+  - 입력 오류 → 원래 기록을 보고 고침
+  - 시료 문제 (RNA 분해, 라이브러리 실패) → 기록을 남기고 제외
+  - 생물학적으로 진짜 극단값 → **남김**. 지우면 변동을 과소평가
+- robust 요약은 이상치를 **찾는** 데 씀. 이상치에 덜 흔들리는 검정(순위 기반)은 [8장](08_test_map.qmd)
+- 오믹스에서는 시료 단위로 봄: 시료별 log count boxplot에서 혼자 내려앉은 시료가 대표적
+:::
+
+# 7. 정리
+
+- 데이터의 종류(범주형, 순서형, count, 연속형)가 요약·그림·검정을 정함 → `str()`로 먼저 확인
+- 대칭인 자료는 평균·SD, 치우친 자료는 중앙값·IQR — 유전자 count는 평균이 중앙값의 약 7배
+- 표본분산을 n − 1로 나누는 이유: 평균을 같은 자료에서 추정했기 때문. 추정한 평균이 2개면 n − 2
+- 자유도 = 자료 수 − 자료에서 추정한 모수의 수
+- 분포는 histogram, boxplot, QQ plot으로 직접 봄. count는 log 척도에서 봄
+- 평균과 SD는 값 하나로 무너지고, 중앙값·IQR·MAD는 버팀
+
+# 연습문제
+
+1. 다음 변수의 종류(범주형, 순서형, count, 연속형)를 쓰라: (a) 세포 유형 주석 (b) 종양 병기 I–IV (c) 세포 하나의 UMI 수 (d) log2 fold change (e) 시퀀싱 batch 번호 1, 2, 3
+2. 4절 1)의 시뮬레이션에서 `n`을 3과 30으로 바꿔 보라. n으로 나눈 분산의 평균은 참값 0.64의 몇 배인가? (n − 1)/n과 비교하라.
+3. 6절에서 잘못 입력한 값이 407이 아니라 4070이었다면 평균, SD, 중앙값, MAD는 각각 어떻게 될까? 먼저 예상하고 코드로 확인하라.
+4. 동료가 자료 B를 보고 "이 시료에서 유전자는 평균 368 read를 받으니, read 100개 미만인 유전자는 발현이 낮은 편"이라고 했다. `mean(genes < 100)`을 계산해 보고, 이 말이 무엇을 놓쳤는지 설명하라.

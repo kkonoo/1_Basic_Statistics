@@ -31,7 +31,7 @@ format:
 | Part | 장 | 주제 | 상태 |
 |---|---|---|---|
 | **1** 데이터와 확률 | [0](chapters/00_why_statistics.qmd) | 왜 통계인가 | 초안 |
-| | [1](chapters/01_describing_data.qmd) | 데이터의 종류와 요약 | 작성 예정 |
+| | [1](chapters/01_describing_data.qmd) | 데이터의 종류와 요약 | 초안 |
 | | [2](chapters/02_probability.qmd) | 확률과 확률변수 | 작성 예정 |
 | | [3](chapters/03_distributions.qmd) | 분포: 이항, 포아송, 음이항, 정규 | 작성 예정 |
 | **2** 추정 | [4](chapters/04_sampling_clt.qmd) | 표본과 모집단, 중심극한정리 | 작성 예정 |
