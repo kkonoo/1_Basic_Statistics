@@ -22,14 +22,6 @@ format:
         ">
 ---
 
-::: {.callout-note collapse="true"}
-## 원자료
-- GT `1-I`, `1-II` (Simple)
-- dsbook `regression/*.Rmd` — 구조 참고
-- 예제는 종양 시료의 공동발현과 고지방식 기간으로 새로 만들고, 문장·코드는 새로 씀
-- 이 장은 짧은 요약. 회귀는 [3. Linear Regression](https://kkonoo.github.io/3_linear_regression/)에서 제대로 다룸
-:::
-
 ::: {.callout-important collapse="true"}
 ## 실습 자료 두 가지
 

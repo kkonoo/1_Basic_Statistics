@@ -32,14 +32,6 @@ format:
         ">
 ---
 
-::: {.callout-note collapse="true"}
-## 원자료
-- dsbook `dataviz/distributions.Rmd` — 구조 참고 (변수의 종류 → 분포 요약 → boxplot·QQ plot 순서)
-- DALS *Exploratory Data Analysis* — 목차 참고 (QQ plot, boxplot, robust summary)
-- 내 공부 노트 — "표본분산은 왜 N-1로 나누나" 질문을 "처음엔 여기서 헷갈려요" 상자로
-- 예제는 마우스 실험과 유전자 count로 새로 만들고, 문장·코드는 새로 씀
-:::
-
 ::: {.callout-important collapse="true"}
 ## 실습 자료 — 고지방식 마우스 40마리, 유전자 5000개
 

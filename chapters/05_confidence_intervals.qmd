@@ -25,13 +25,6 @@ format:
         ">
 ---
 
-::: {.callout-note collapse="true"}
-## 원자료
-- PH125 `3.Confidence intervals and p-values` (CI, MC simulation, The Correct Language)
-- `4_confidence-intervals-p-values.Rmd` — 구조 참고
-- 원자료의 여론조사 예제를 **마우스 유전자 발현**으로 교체, 문장·코드는 새로 씀
-:::
-
 ::: {.callout-important collapse="true"}
 ## 실습 자료 — Chow 마우스 6마리의 *Cd36* 발현
 

@@ -25,14 +25,6 @@ format:
         ">
 ---
 
-::: {.callout-note collapse="true"}
-## 원자료
-- `Overview_of_statistical_tests.pdf`, `statistics compare.png`, `statistics.png` — 지도의 구조 참고
-- GT cheat sheet 묶음
-- PH125 `7.Association tests` 강의, Study_5 — "GWAS에서 p-value만 보고하면 의미가 적다"를 "처음엔 여기서 헷갈려요" 상자로
-- 실습 예제 6개는 모두 새로 만든 가상의 오믹스 자료, 문장·코드는 새로 씀
-:::
-
 ::: {.callout-important collapse="true"}
 ## 실습 자료 6개와 참값
 

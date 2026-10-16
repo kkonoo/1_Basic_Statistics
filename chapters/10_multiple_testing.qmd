@@ -24,12 +24,6 @@ format:
         ">
 ---
 
-::: {.callout-note collapse="true"}
-## 원자료
-- 없음 — 새로 작성
-- DALS Inference for High Dimensional Data — 목차 참고
-:::
-
 ::: {.callout-important collapse="true"}
 ## 실습 자료 — 유전자 2만 개, 마우스 6 + 6마리
 

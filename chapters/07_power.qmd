@@ -23,14 +23,6 @@ format:
         ">
 ---
 
-::: {.callout-note collapse="true"}
-## 원자료
-- PH125 `3_C.I_and_P_value-4_Power` 강의
-- study_1 (power 메모) — "표본이 작으면 진짜 차이도 못 잡는다"를 "처음엔 여기서 헷갈려요" 상자로
-- DALS Power Calculations — 목차 참고
-- 원자료의 여론조사 예제를 [6장](06_hypothesis_testing.qmd)의 **고지방식 마우스 실험**으로 교체, 문장·코드는 새로 씀
-:::
-
 ::: {.callout-important collapse="true"}
 ## 실습 설정 — 6장의 고지방식 마우스 실험을 1만 번
 

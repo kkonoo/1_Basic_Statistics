@@ -24,14 +24,6 @@ format:
         ">
 ---
 
-::: {.callout-note collapse="true"}
-## 원자료
-- `regression models for count data in R.pdf` — 포아송·음이항의 평균-분산 관계
-- GT `4-IV. (Poisson) Basic Concepts and Estimation` — 가능도와 추정
-- DALS Statistical Models — 목차 참고
-- 예제는 유전형, RNA-seq read count, 마우스 체중으로 새로 만들고, 문장·코드는 새로 씀
-:::
-
 ::: {.callout-important collapse="true"}
 ## 실습 설정과 참값
 

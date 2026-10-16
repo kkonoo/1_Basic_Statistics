@@ -27,14 +27,6 @@ format:
         ">
 ---
 
-::: {.callout-note collapse="true"}
-## 원자료
-- PH125 `1.parameters and estimates`, `2.the central limit theorem in practice` 강의
-- `2_parameters-estimates.Rmd`, `3_clt.Rmd` — 구조 참고
-- study_1, study_2 — "큰 표본이면 무조건 정확한가" 질문을 "처음엔 여기서 헷갈려요" 상자로
-- 원자료의 여론조사 예제를 **마우스 간 중성지방 측정**으로 교체, 문장·코드는 새로 씀
-:::
-
 ::: {.callout-important collapse="true"}
 ## 실습 자료 — 고지방식 마우스 10만 마리의 간 중성지방
 

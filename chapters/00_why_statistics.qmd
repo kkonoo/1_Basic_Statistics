@@ -23,12 +23,6 @@ format:
         ">
 ---
 
-::: {.callout-note collapse="true"}
-## 원자료
-- 없음 — 새로 작성
-- 의사반복 예제는 단일세포 실험 설계(반복 단위는 기증자)를 기초통계 수준으로 옮긴 것
-:::
-
 ::: {.callout-important collapse="true"}
 ## 실습 자료 — 마우스 간 RNA-seq, 유전자 하나
 
