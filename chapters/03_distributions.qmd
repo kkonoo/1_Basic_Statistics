@@ -9,24 +9,354 @@ format:
       text: |
         <meta name="ai-title" content="3. 분포">
         <meta name="ai-context" content="
-        이 챕터는 이항 → 포아송 → 음이항 → 정규, RNA-seq count가 음이항인 이유를 다룹니다. (초안 작성 전)
+        이 챕터는 이항, 포아송, 음이항, 정규분포와 RNA-seq count가 음이항분포를 따르는 이유, 표준화(z-score), 최대가능도 추정을 다룹니다.
+        이항분포 Binomial(n, p): 독립 시행 n번 중 성공 수, 평균 np, 분산 np(1-p). 한 배 새끼 8마리 중 aa의 수(p = 1/4)를 1만 배 시뮬레이션하면(set.seed(20261020)) 평균 2.01, 분산 1.51(참값 2, 1.5)이고 dbinom과 일치합니다.
+        유전형(변이 대립유전자 개수)은 Binomial(2, q)이며 q = 0.3이면 0, 1, 2의 확률이 0.49, 0.42, 0.09로 Hardy-Weinberg 평형과 같습니다. 대립유전자 특이 발현의 ref read 수, 세포 유형 수도 이항입니다.
+        포아송분포 Poisson(λ): n이 크고 p가 작은 이항. read 1000만 개 중 비율 1e-5인 유전자의 read 수 Binomial(1e7, 1e-5)는 Poisson(100)과 유효숫자 네 자리까지 같습니다.
+        포아송은 평균 = 분산 = λ. 기술적 반복 1만 번(set.seed(2)) 평균 99.99, 분산 102.5. 상대적 흔들림은 1/sqrt(λ)로 λ = 1이면 100%, 100이면 10%, 10000이면 1%입니다.
+        음이항분포 NB(μ, φ): 마우스마다 참 수준 λ_i가 감마분포로 다르고 그 수준에서 포아송으로 시퀀싱하면 음이항이 됩니다. 분산 = μ + φμ²(φ = dispersion, R의 size = 1/φ).
+        μ = 100, φ = 0.1에서(set.seed(3)) 두 단계로 만든 count의 평균 100.0, 분산 1121, rnbinom 평균 99.4, 분산 1104, 이론 분산 1100. 분산 ≫ 평균이 과산포입니다. sqrt(φ)는 생물학적 CV로 φ = 0.1이면 약 32%.
+        유전자 1000개(평균 1-10000, 마우스 6마리, φ = 0.1, set.seed(4))의 평균-분산 그림에서 평균이 작으면 포아송 선 근처, 크면 포아송보다 훨씬 위입니다. 그래서 DESeq2, edgeR는 음이항을 씁니다.
+        정규분포 N(μ, σ²): 평균 ± 1, 2, 3 SD 안에 들 확률 0.683, 0.954, 0.997. 포아송은 λ = 3에서는 정규 근사가 안 맞고 λ = 100에서는 잘 맞습니다.
+        표준화 z = (x - μ)/σ. Chow 체중 N(30, 3²)에서 36 g은 z = 2, 더 무거울 확률 0.023. 히트맵은 유전자마다 z-score로 바꿔 그립니다.
+        최대가능도 추정(MLE): 가능도 L(λ)는 λ일 때 지금 자료가 나올 확률. 6개 레인 count 91, 94, 100, 117, 93, 101(참 λ = 100, set.seed(5))의 로그가능도를 최대로 하는 λ는 99.33으로 표본평균과 같습니다.
+        모든 실습은 base R로 합니다.
         ">
 ---
 
 ::: {.callout-note collapse="true"}
 ## 원자료
-- `regression models for count data in R.pdf`
-- GT `4-IV. (Poisson) Basic Concepts and Estimation`
+- `regression models for count data in R.pdf` — 포아송·음이항의 평균-분산 관계
+- GT `4-IV. (Poisson) Basic Concepts and Estimation` — 가능도와 추정
 - DALS Statistical Models — 목차 참고
+- 예제는 유전형, RNA-seq read count, 마우스 체중으로 새로 만들고, 문장·코드는 새로 씀
 :::
+
+::: {.callout-important collapse="true"}
+## 실습 설정과 참값
+
+| 분포 | 이 장의 예 | 참값 |
+|---|---|---|
+| 이항 | 한 배 새끼 8마리 중 aa의 수 ([2장](02_probability.qmd)) | n = 8, p = 1/4 → 평균 2, 분산 1.5 |
+| 포아송 | 같은 라이브러리를 반복 시퀀싱한 read count (기술적 반복) | λ = 100 → 평균 100, 분산 100 |
+| 음이항 | 마우스마다 다시 만든 라이브러리의 read count (생물학적 반복) | 평균 μ = 100, dispersion φ = 0.1 → 분산 1100 |
+| 정규 | Chow 마우스 체중 | 평균 30 g, SD 3 g |
+
+- 난수는 절마다 `set.seed()`로 고정
+:::
+
+- [2장](02_probability.qmd)에서 확률변수는 "어떤 값을 어떤 확률로 갖는가"로 정해진다고 했음 = **분포**
+- 이 장의 흐름: 상자에서 뽑기(이항) → 아주 많이, 아주 드물게 뽑기(포아송) → 개체마다 상자가 다름(음이항) → 연속인 값(정규)
+
+# 1. 이항분포: 성공/실패를 n번
+
+## 1) 정의
+
+- 결과가 둘(성공/실패)인 시행을 **독립으로 n번**, 매번 성공 확률 p → 성공 횟수 $X$
+
+$$X \sim \text{Binomial}(n, p), \qquad P(X = k) = \binom{n}{k} p^k (1-p)^{n-k}$$
+
+| | 식 | 새끼 8마리, p = 1/4 |
+|---|---|---|
+| 평균 | $np$ | 2 |
+| 분산 | $np(1-p)$ | 1.5 |
+
+## 2) 2장의 시뮬레이션 = 이항분포
+
+```{r}
+#| label: binom
+set.seed(20261020)
+X <- rbinom(10000, size = 8, prob = 0.25)        # 1만 배, 배마다 aa 새끼 수
+sim    <- table(factor(X, levels = 0:8)) / 10000
+theory <- dbinom(0:8, size = 8, prob = 0.25)     # 공식
+round(rbind(sim, theory), 3)
+c(mean = mean(X), var = var(X))
+```
+
+```{r}
+#| label: fig-binom
+#| fig-cap: "Binomial(8, 1/4). 막대: 공식(dbinom), 점: 시뮬레이션 1만 배"
+#| fig-height: 3.5
+bp <- barplot(theory, names.arg = 0:8, col = "grey70", border = NA, las = 1,
+              ylim = c(0, 0.35), xlab = "aa 새끼 수", ylab = "확률")
+points(bp, sim, pch = 19, col = "#5B4D80", cex = 1.3)
+```
+
+- 시뮬레이션(점)이 공식(막대)에 겹침 → [2장](02_probability.qmd)에서 상자로 뽑은 것이 이항분포
+- 시뮬레이션 평균 2.01, 분산 1.51 ↔ 참값 2, 1.5
+
+## 3) 오믹스의 이항분포
+
+| 상황 | n | p | X |
+|---|---|---|---|
+| 한 사람의 유전형 | 2 (염색체 두 벌) | 대립유전자 빈도 q | 변이 대립유전자 개수 0/1/2 |
+| 대립유전자 특이 발현 | 이형접합 SNP를 덮는 read 수 | 0.5 (치우침 없으면) | ref 대립유전자 read 수 |
+| 세포 유형 비율 | 캡처한 세포 수 | 조직 속 비율 | 그 유형의 세포 수 ([2장](02_probability.qmd)) |
+
+```{r}
+#| label: hwe
+dbinom(0:2, size = 2, prob = 0.3)    # 대립유전자 빈도 0.3일 때 유전형 0/1/2의 확률
+```
+
+- $(1-q)^2,\ 2q(1-q),\ q^2$ = 0.49, 0.42, 0.09 → **Hardy-Weinberg 평형**이 바로 Binomial(2, q)
+
+# 2. 포아송분포: 드문 사건의 개수
+
+## 1) n이 아주 크고 p가 아주 작으면
+
+- RNA-seq 라이브러리에서 read 1000만 개를 읽음
+- 어떤 유전자의 분자가 라이브러리의 0.001%($p = 10^{-5}$)를 차지 → read 하나가 이 유전자일 확률
+- 이 유전자의 read 수 = Binomial($10^7$, $10^{-5}$) → 평균 $np = 100$
+- n이 크고 p가 작으면 이항분포는 **평균 λ = np 하나로 정해지는 분포**에 가까워짐 = 포아송분포
+
+$$X \sim \text{Poisson}(\lambda), \qquad P(X = k) = \frac{\lambda^k e^{-\lambda}}{k!}$$
+
+```{r}
+#| label: binom-pois
+k <- c(80, 90, 100, 110, 120)
+prob <- rbind(binomial = dbinom(k, size = 1e7, prob = 1e-5),
+              poisson  = dpois(k, lambda = 100))
+colnames(prob) <- k
+signif(prob, 4)
+```
+
+- 유효숫자 네 자리까지 같음 → read count에는 포아송을 씀
+
+## 2) 평균 = 분산
+
+- 포아송분포의 가장 중요한 성질: **평균 = 분산 = λ**
+- 같은 라이브러리를 반복해서 시퀀싱(기술적 반복)하면 이 성질이 나타남 ([0장](00_why_statistics.qmd))
+
+```{r}
+#| label: pois-tech
+set.seed(2)
+tech <- rpois(10000, lambda = 100)   # 같은 라이브러리를 1만 번 시퀀싱
+c(mean = mean(tech), var = var(tech))
+```
+
+- 평균 99.99, 분산 102.5 → 거의 같음
+
+```{r}
+#| label: fig-pois-shapes
+#| fig-cap: "λ에 따른 포아송분포의 모양. λ가 작으면 오른쪽으로 치우치고, 크면 대칭에 가까워짐"
+#| fig-height: 3
+par(mfrow = c(1, 3), mar = c(4, 4, 2, 1))
+for (lam in c(1, 10, 100)) {
+  k <- max(0, round(lam - 4 * sqrt(lam))):max(5, round(lam + 4 * sqrt(lam)))
+  plot(k, dpois(k, lam), type = "h", lwd = 3, col = "#5B4D80", las = 1,
+       main = paste0("λ = ", lam), xlab = "count", ylab = "확률")
+}
+```
+
+- 상대적인 흔들림 SD / 평균 = $\sqrt{\lambda}/\lambda = 1/\sqrt{\lambda}$
+  - λ = 1이면 100%, λ = 100이면 10%, λ = 10000이면 1%
+- → count가 작은 유전자는 **기술적 우연만으로도** 크게 흔들림
+
+# 3. 음이항분포: RNA-seq count
+
+## 1) 마우스마다 상자가 다르다
+
+- 생물학적 반복: 마우스마다 이 유전자의 **참 발현 수준 $\lambda_i$가 다름** ([0장](00_why_statistics.qmd))
+- 그 수준에서 시퀀싱하면 포아송
+- 두 단계를 합치면
+
+$$\lambda_i \sim \text{Gamma}(\text{평균 } \mu), \qquad X_i \mid \lambda_i \sim \text{Poisson}(\lambda_i) \quad\Rightarrow\quad X_i \sim \text{NB}(\mu, \phi)$$
+
+- 포아송의 평균을 감마분포로 흔들면 **음이항분포 (negative binomial, NB)**
+
+```{r}
+#| label: nb-mix
+set.seed(3)
+mu <- 100; phi <- 0.1                                   # 평균, dispersion
+lambda_i <- rgamma(10000, shape = 1 / phi, scale = mu * phi)   # 마우스별 참 수준
+mixture  <- rpois(10000, lambda_i)                      # 그 수준에서 시퀀싱
+direct   <- rnbinom(10000, mu = mu, size = 1 / phi)     # 음이항에서 바로 뽑기
+
+rbind(mixture = c(mean = mean(mixture), var = var(mixture)),
+      direct  = c(mean = mean(direct),  var = var(direct)),
+      theory  = c(mean = mu,            var = mu + phi * mu^2))
+```
+
+- 두 단계로 만든 count와 `rnbinom()`으로 바로 뽑은 count의 평균·분산이 같음 → 같은 분포
+- 분산 1121 ≫ 평균 100 → **과산포 (overdispersion)**
+
+## 2) 평균-분산 관계
+
+| 분포 | 분산 | μ = 100, φ = 0.1일 때 |
+|---|---|---|
+| 포아송 | $\mu$ | 100 |
+| 음이항 | $\mu + \phi\mu^2$ | 100 + 1000 = 1100 |
+
+- $\mu$: 기술적(포아송) 변동, $\phi\mu^2$: 생물학적 변동
+- $\sqrt{\phi}$ = 생물학적 변동계수(CV): φ = 0.1이면 마우스 사이에서 발현이 약 32% 흔들림
+- `rnbinom()`의 `size`는 $1/\phi$
+
+## 3) 유전자 1000개로 보기
+
+- 실제 RNA-seq에서 가장 먼저 그리는 그림 중 하나: 유전자마다 평균과 분산을 계산해 찍기
+- 유전자 1000개, 평균 1~10000, 마우스 6마리, 모두 φ = 0.1
+
+```{r}
+#| label: fig-meanvar
+#| dev: "png"
+#| fig-cap: "유전자 1000개의 평균-분산 (마우스 6마리). 회색 점선: 포아송(분산 = 평균), 보라 선: 음이항(분산 = μ + 0.1μ²)"
+#| fig-height: 4.5
+set.seed(4)
+gene_mu <- 10^runif(1000, 0, 4)                        # 유전자별 참 평균
+counts  <- t(sapply(gene_mu, function(m) rnbinom(6, mu = m, size = 1 / phi)))
+g_mean  <- rowMeans(counts)
+g_var   <- apply(counts, 1, var)
+
+keep <- g_var > 0                                      # 로그 축에 0은 못 그림
+par(mar = c(4, 5.5, 1, 1))
+plot(g_mean[keep], g_var[keep], log = "xy", pch = 19, cex = 0.5, col = "grey70", las = 1,
+     xlab = "유전자별 평균 count", ylab = "")
+title(ylab = "유전자별 분산", line = 4.3)
+abline(0, 1, col = "grey40", lwd = 2, lty = 2)         # 분산 = 평균
+curve(x + phi * x^2, add = TRUE, col = "#5B4D80", lwd = 2)
+sum(!keep)                                             # 분산이 0이라 빠진 유전자 수
+```
+
+- 평균이 작은 유전자: 포아송 선 근처 (기술적 변동이 지배)
+- 평균이 큰 유전자: 포아송 선보다 **훨씬 위** (생물학적 변동이 지배)
+- 6마리로 잰 분산은 유전자마다 크게 흔들림 → 이 흔들림을 줄이는 방법이 [11장](11_bayes_intro.qmd)의 shrinkage
+
+::: {.callout-tip}
+## 그래서 DESeq2·edgeR는 음이항
+- 생물학적 반복이 있는 RNA-seq count는 포아송으로 모형화하면 분산을 과소평가 → p-value가 지나치게 작아짐
+- DESeq2·edgeR는 유전자마다 음이항 모형을 쓰고, 유전자별 dispersion φ를 추정
+- 단일세포 UMI count도 같은 이유로 음이항을 자주 씀
+:::
+
+# 4. 정규분포와 표준화
+
+## 1) 정규분포
+
+$$X \sim N(\mu, \sigma^2), \qquad f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)$$
+
+- 평균 μ와 SD σ 두 숫자로 정해지는 좌우 대칭 종 모양
+- 체중, log 발현량처럼 여러 작은 요인이 더해진 값이 대개 이 모양
+- 평균이 큰 포아송·음이항도 정규분포에 가까워짐
+
+```{r}
+#| label: fig-normal-approx
+#| fig-cap: "포아송분포(막대)와 같은 평균·분산의 정규분포(선). λ = 3에서는 안 맞고, λ = 100에서는 잘 맞음"
+#| fig-height: 3.5
+par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
+for (lam in c(3, 100)) {
+  k <- max(0, round(lam - 4 * sqrt(lam))):round(lam + 4 * sqrt(lam))
+  plot(k, dpois(k, lam), type = "h", lwd = 3, col = "grey70", las = 1,
+       main = paste0("λ = ", lam), xlab = "count", ylab = "확률")
+  curve(dnorm(x, lam, sqrt(lam)), add = TRUE, col = "#5B4D80", lwd = 2)
+}
+```
+
+- count가 작으면 정규분포 근사가 틀림 → 낮은 발현 유전자에 t-검정을 그대로 쓰기 어려운 이유
+
+## 2) 68-95-99.7
+
+```{r}
+#| label: rule
+pnorm(1:3) - pnorm(-(1:3))    # 평균 ± 1, 2, 3 SD 안에 들어갈 확률
+```
+
+| 구간 | 확률 | Chow 체중 (30 ± 3 g) |
+|---|---|---|
+| 평균 ± 1 SD | 0.683 | 27–33 g |
+| 평균 ± 2 SD | 0.954 | 24–36 g |
+| 평균 ± 3 SD | 0.997 | 21–39 g |
+
+## 3) 표준화: z-score
+
+- 서로 다른 단위·척도의 값을 비교하려면 **평균에서 SD 몇 개만큼 떨어져 있나**로 바꿈
+
+$$z = \frac{x - \mu}{\sigma}$$
+
+```{r}
+#| label: zscore
+z <- (36 - 30) / 3          # 체중 36 g인 Chow 마우스
+z
+1 - pnorm(z)                # 이보다 무거울 확률
+```
+
+- 36 g = 평균보다 2 SD 위 → Chow 마우스 중 상위 2.3%
+- $z$는 단위가 없고, $X$가 정규분포면 $z \sim N(0, 1)$ (표준정규분포)
+
+::: {.callout-tip}
+## 히트맵의 z-score
+- 발현 히트맵은 보통 **유전자마다** z-score로 바꿔 그림 (행 표준화)
+- 발현량이 1000배 차이 나는 유전자들도 "시료 사이에서 어디가 높고 낮은가"를 같은 색 척도로 비교할 수 있음
+- 대신 z-score 히트맵에서는 유전자 사이의 **절대 발현량 차이**가 사라짐
+:::
+
+# 5. 최대가능도 추정 맛보기
+
+## 1) 자료를 가장 잘 설명하는 모수
+
+- 지금까지는 모수(λ, μ)를 알고 자료를 만들었음
+- 실제로는 거꾸로: **자료를 보고 모수를 추정**
+- 예: 같은 라이브러리를 6개 레인에서 시퀀싱한 count. λ는 얼마일까?
+
+```{r}
+#| label: mle-data
+set.seed(5)
+x <- rpois(6, lambda = 100)    # 참 λ = 100
+x
+```
+
+- **가능도 (likelihood)** $L(\lambda)$: λ가 이 값일 때 지금의 자료가 나올 확률
+- 독립인 관측의 가능도는 확률의 곱 → 계산은 로그를 씌워 합으로
+
+$$\log L(\lambda) = \sum_{i=1}^{n} \log P(X = x_i \mid \lambda)$$
+
+## 2) 가능도를 최대로
+
+```{r}
+#| label: fig-loglik
+#| fig-cap: "λ에 따른 로그가능도. 보라 선: 최댓값(= 표본평균), 회색 점선: 참값 100"
+#| fig-height: 3.5
+loglik <- function(lam) sum(dpois(x, lam, log = TRUE))
+optimize(loglik, interval = c(50, 150), maximum = TRUE)$maximum
+mean(x)
+
+lams <- seq(80, 120, by = 0.1)
+plot(lams, sapply(lams, loglik), type = "l", lwd = 2, col = "grey40", las = 1,
+     xlab = "λ", ylab = "로그가능도")
+abline(v = mean(x), col = "#5B4D80", lwd = 2)
+abline(v = 100, col = "grey70", lwd = 2, lty = 2)
+```
+
+- 로그가능도가 가장 큰 λ = 99.33 = 표본평균 → 포아송의 최대가능도 추정량(MLE)은 표본평균
+- 참값 100과의 차이는 6개만 봤기 때문 (추정량도 흔들림 → [4장](04_sampling_clt.qmd))
+- DESeq2가 유전자별 dispersion φ를 추정하는 것도 같은 원리 (음이항 가능도를 최대화)
+
+# 6. 분포 고르기
+
+| 자료 | 분포 | 평균 | 분산 | 오믹스 예 | R |
+|---|---|---|---|---|---|
+| n번 중 성공 수 | 이항 | $np$ | $np(1-p)$ | 유전형, 대립유전자 특이 read, 세포 유형 수 | `dbinom` |
+| 드문 사건의 개수 | 포아송 | $\lambda$ | $\lambda$ | 기술적 반복 read count | `dpois` |
+| 개체마다 평균이 다른 count | 음이항 | $\mu$ | $\mu + \phi\mu^2$ | 생물학적 반복 RNA-seq, UMI | `dnbinom` |
+| 연속, 대칭 | 정규 | $\mu$ | $\sigma^2$ | 체중, log 발현량 | `dnorm` |
 
 ::: {.callout-warning}
-## 작성 예정
-이 장은 아직 쓰는 중입니다. 다룰 내용:
-
-1. 이항분포: 성공/실패를 n번
-2. 포아송분포: 드문 사건의 개수, 평균 = 분산
-3. 음이항분포: 과산포(overdispersion)와 RNA-seq
-4. 정규분포와 표준화
-5. 최대가능도 추정(MLE) 맛보기
+## 분포는 자료에 맞춰 고른다
+- "count니까 포아송"이라고 정하기 전에 **분산과 평균을 비교** ([1장](01_describing_data.qmd)의 `var` vs `mean`)
+- 분산 ≫ 평균이면 음이항
+- 정규분포 가정은 QQ plot으로 확인 ([1장](01_describing_data.qmd))
 :::
+
+# 7. 정리
+
+- 이항: 독립 시행 n번 중 성공 수. 유전형(Hardy-Weinberg)이 Binomial(2, q)
+- 포아송: n이 크고 p가 작은 이항. 평균 = 분산. 기술적 반복 read count
+- 음이항: 개체마다 평균이 다른 포아송. 분산 = μ + φμ². 생물학적 반복 RNA-seq count → DESeq2·edgeR
+- 정규: 평균과 SD로 정해지는 종 모양. 68-95-99.7. z = (x − μ) / σ
+- 최대가능도: 자료가 나올 확률을 가장 크게 만드는 모수. 포아송의 MLE는 표본평균
+
+# 연습문제
+
+1. 이형접합 SNP를 덮는 read가 40개 있다. 두 대립유전자가 똑같이 발현된다면(p = 0.5) ref read가 30개 이상 나올 확률은? `pbinom()`으로 구하라. 실제로 30개가 나왔다면 무엇을 의심할 수 있는가?
+2. 3절 1)에서 `phi`를 0.01과 0.5로 바꿔 보라. 분산은 각각 얼마가 되는가? φ = 0.01이면 포아송과 얼마나 다른가?
+3. φ = 0.1인 음이항에서 μ = 10, 100, 10000일 때 CV(SD / 평균)를 계산하라. μ가 커지면 CV는 어떤 값에 가까워지는가? 그 값의 뜻은?
+4. Chow 마우스 체중이 N(30, 3²)일 때, 상위 5%에 들려면 몇 g 이상이어야 하는가? `qnorm()`으로 구하고 `rnorm()` 시뮬레이션으로 확인하라.
