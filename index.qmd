@@ -19,14 +19,14 @@ format:
         ">
 ---
 
-## Course Overview
+# Course Overview
 
 - 오믹스 데이터를 처음 분석하는 사람이 **p-value, 신뢰구간, FDR을 정확히 읽을 수 있게** 하는 것이 목표
 - 공식보다 **시뮬레이션**이 먼저 — 참값을 정해 두고 자료를 만들어서, 방법이 맞는 답을 내는지 직접 확인
 - 예제는 전부 생물학 자료 — 유전자 발현, 유전형, 세포 수
 - 이 책 다음에: [2. Linear Algebra](https://kkonoo.github.io/2_linear_algebra/) · [3. Linear Regression](https://kkonoo.github.io/3_linear_regression/) · [4. Bayes](https://kkonoo.github.io/4_Bayes/)
 
-## Syllabus
+# Syllabus
 
 | Part | 장 | 주제 | 상태 |
 |---|---|---|---|
@@ -43,7 +43,7 @@ format:
 | | [10](chapters/10_multiple_testing.qmd) | 다중검정 | 작성 예정 |
 | | [11](chapters/11_bayes_intro.qmd) | 베이지안 맛보기 | 작성 예정 |
 
-## 이 사이트 읽는 법
+# 이 사이트 읽는 법
 
 | 상자 | 뜻 |
 |---|---|
@@ -56,7 +56,7 @@ format:
 - R 코드는 복사해서 그대로 실행 가능 (base R만 씀)
 - 오른쪽 아래 **AI 학습 도우미**에 지금 보고 있는 장의 내용을 물어볼 수 있음
 
-## 선수 지식
+# 선수 지식
 
 - R 기본 문법 (벡터, 함수 호출) — 복습은 [3. Linear Regression 부록 B](https://kkonoo.github.io/3_linear_regression/chapters/A2_r_reference.html)
 - 고등학교 수준의 수학 (합, 평균, 제곱근)

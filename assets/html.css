@@ -3,31 +3,86 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 @import url('https://cdn.jsdelivr.net/gh/wan2land/d2coding/d2coding-ligature-full.css');
 
+:root {
+  --course-heading-1: #4A3D6B;
+  --course-heading-1-bg: #f3f0f7;
+  --course-heading-2: #5B4D80;
+  --course-heading-2-border: #cfc4e2;
+  --course-heading-3: #7A6A99;
+  --course-code-bg: #f5f5f5;
+  --course-muted-text: #555;
+}
+
+body.quarto-dark {
+  --course-heading-1: #e1d7f4;
+  --course-heading-1-bg: #2a2438;
+  --course-heading-2: #d1c2ee;
+  --course-heading-2-border: #76639d;
+  --course-heading-3: #bca9df;
+  --course-code-bg: #20242b;
+  --course-muted-text: #d4d4d4;
+}
+
 body {
   font-family: "Pretendard", sans-serif;
   font-size: 1.1em;   /* 기본 16px → ~17.6px */
   font-weight: 500;  /* Medium */
 }
 
-/* 소제목 색상 */
-h2 {
-  color: #5B4D80; font-size: 1.4em;
-  background-color: #f3f0f7;
-  padding: 0.3em;
+/* ── 제목 ──────────────────────────────────────
+   h1(대제목)에만 배경. h2 이하는 배경 없음.
+   :not(.title) 로 문서 제목 블록은 제외.        */
+
+h1:not(.title) {
+  color: var(--course-heading-1);
+  font-size: 1.6em;
+  font-weight: 700;
+  background-color: var(--course-heading-1-bg);
+  padding: 0.4em 0.6em;
   border-radius: 8px;
-  margin: 0.3em 0; /* 상하만 margin, 좌우는 0 */
+  margin: 1.6em 0 0.7em;
 }
+
+h2 {
+  color: var(--course-heading-2);
+  font-size: 1.35em;
+  font-weight: 600;
+  background: none;          /* 배경 제거 */
+  border-left: 4px solid var(--course-heading-2-border);
+  padding: 0 0 0 0.55em;
+  border-radius: 0;
+  margin: 1.3em 0 0.45em;
+}
+
 h3 {
-  color: #7A6A99; font-size: 1.25em;
-  /* background-color: #fbfaff; /* h2보다 훨씬 연하게 */ /*
-  padding: 0.3em;
-  border-radius: 6px;
-  margin: 0.2em 0;
+  color: var(--course-heading-3);
+  font-size: 1.2em;
+  font-weight: 600;
+  background: none;
+  padding: 0;
+  margin: 1.0em 0 0.35em;
 }
-h4 { 
-  color: #5B4D80; font-size: 1.2em;  /* #9A8DB5 */
-  border-radius: 4px; font-weight: 600;  /* SemiBold */
-  margin: 0.2em 0;
+
+h4, h5 {
+  color: var(--course-heading-2);
+  font-size: 1.1em;
+  font-weight: 600;
+  background: none;
+  padding: 0;
+  margin: 0.8em 0 0.3em;
+}
+
+/* callout 제목은 h2/h3 로 쓰지만 헤딩 스타일을 상속하지 않게 */
+.callout h2,
+.callout h3,
+.callout-title-container h2,
+.callout-title-container h3 {
+  background: none;
+  border-left: none;
+  padding: 0;
+  margin: 0;
+  font-size: inherit;
+  color: inherit;
 }
 
 
@@ -35,7 +90,7 @@ h4 {
 code, pre code {
   font-family: 'D2Coding', 'Fira Code', monospace;
   font-size: 1em;
-  font-weight: 500
+  font-weight: 500;
   border-radius: 6px;
 }
 
@@ -48,15 +103,15 @@ pre {
 
 /* 일반 코드 블록 (``` 만 쓴 것) */
 pre:not(.sourceCode) {
-  background: #f5f5f5;
+  background: var(--course-code-bg);
 }
 pre:not(.sourceCode) code {
-  color: #555;
+  color: var(--course-muted-text);
 }
 
 /* R 코드 블록 */
 pre.sourceCode, pre.sourceCode code {
-  background: #f5f5f5; /* #f3f0f7: 연보라 */
+  background: var(--course-code-bg);
   margin: 0;
 }
 .cell-output,
@@ -76,7 +131,7 @@ pre.sourceCode, pre.sourceCode code {
   font-family: 'Pretendard', sans-serif;
   font-size: 1.2em;
   font-weight: 500;  /* Medium */
-  color: #555;
+  color: var(--course-muted-text);
 }
 
 /* callout 제목 글씨체 */
@@ -85,7 +140,7 @@ pre.sourceCode, pre.sourceCode code {
   font-weight: 700;
   font-size: 1.2em;
   font-weight: 500;  /* Medium */
-  color: #555;
+  color: var(--course-muted-text);
 }
 
 /* callout 컬러바 */
@@ -99,7 +154,7 @@ pre.sourceCode, pre.sourceCode code {
 /* definition */
 dd,
 .callout-body-container {
-  color: #555;
+  color: var(--course-muted-text);
 }
 
 
@@ -108,4 +163,3 @@ dd,
   display: flex;
   justify-content: center;
 }
-
