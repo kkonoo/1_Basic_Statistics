@@ -9,7 +9,17 @@ format:
       text: |
         <meta name="ai-title" content="11. 베이지안 맛보기">
         <meta name="ai-context" content="
-        이 챕터는 prior·posterior, hierarchical model, shrinkage — 심화는 4. Bayes를 다룹니다. (초안 작성 전)
+        이 챕터는 빈도주의와 베이지안의 차이, Bayes 정리로 믿음 갱신, 변동의 층과 계층 모형, 유전자끼리 정보를 빌리는 shrinkage(LFC, 분산)를 짧게 다루고 심화는 4. Bayes(https://kkonoo.github.io/4_Bayes/)로 연결합니다.
+        빈도주의는 모수 μ를 고정으로, 베이지안은 확률분포로 봅니다. 사전분포 + 자료(가능도) = 사후분포. 베이지안 신용구간에서는 μ가 구간에 있을 확률 95%라고 말할 수 있습니다(5장과 대비).
+        Bayes 정리: 2장 선별검사(유병률 1/5000, 민감도·특이도 99%)에서 양성 1번이면 환자일 확률 0.0194, 독립적인 검사로 2번 양성이면 0.662. 첫 사후가 다음 사전이 됩니다.
+        처음엔 여기서 헷갈려요(변동의 층): 여론조사 모형이 pollster 간 변동을 설명 못 하는 것은 표본추출의 우연(아래 층)만 넣고 기관 차이(위 층)를 넣지 않았기 때문입니다. 생물학에서는 연구실, batch, 코호트가 같은 역할입니다.
+        연구실 5곳 × HFD 마우스 10마리(전체 평균 6.0, 연구실 사이 SD 0.5, 마우스 사이 SD 0.8, set.seed(20261027)): 한 번의 실험에서 50마리를 독립으로 본 95% 구간 (5.58, 6.08), 연구실 평균 5개로 만든 구간 (5.28, 6.39).
+        5000번 반복(set.seed(2))하면 실제 포함률은 마우스를 독립으로 본 구간 0.691, 연구실 평균 구간 0.943. 아래 층만 보면 불확실성을 과소평가합니다.
+        LFC shrinkage(set.seed(3)): 유전자 2000개, 참 LFC ~ N(0, 0.5²), 유전자별 SE 0.1-1.5. 사후평균 = τ²/(τ² + SE²) × 추정값. τ²를 자료에서 추정하면 0.259(참값 0.25). 참값과의 평균 제곱 오차 0.82에서 0.15로 줄어듭니다.
+        추정값 그대로 고른 상위 20개는 평균 SE 1.30, 참 |LFC| 평균 0.53(잡음이 큰 유전자), shrinkage 후 상위 20개는 평균 SE 0.27, 참 |LFC| 1.14. DESeq2 lfcShrink가 7장 winner's curse를 줄이는 원리입니다.
+        분산 빌리기(set.seed(4)): 유전자 5000개를 3 + 3마리(자유도 4)로 추정한 분산을 limma moderated t처럼 (d0 s0² + d s²)/(d0 + d), d0 = 10으로 당기면 참 분산과의 평균 제곱 오차 0.062에서 0.020, 참 분산의 절반 미만으로 추정된 유전자 25.4%에서 2.7%로 줄어 가짜 발견이 줄어듭니다. DESeq2도 dispersion을 평균-dispersion 추세 쪽으로 당깁니다.
+        이것이 empirical Bayes: 유전자가 수만 개라 유전자 전체의 분포를 사전분포로 배워 정보가 부족한 유전자일수록 그쪽으로 당깁니다.
+        모든 실습은 base R로 합니다.
         ">
 ---
 
@@ -17,18 +27,236 @@ format:
 ## 원자료
 - PH125 `5.Bayesian statistics` 강의
 - `6_bayes.Rmd` — 구조 참고
-- study_3, study_4
+- study_3, study_4 — "모델이 pollster 간 변동을 설명 못 한다"는 메모를 "처음엔 여기서 헷갈려요" 상자로
+- 원자료의 선거 여론조사 예제를 **여러 연구실의 마우스 실험, 유전자 fold change**로 교체, 문장·코드는 새로 씀
+- 이 장은 짧은 맛보기. 베이지안 통계는 [4. Bayes](https://kkonoo.github.io/4_Bayes/)에서 제대로 다룸
 :::
+
+::: {.callout-important collapse="true"}
+## 실습 설정과 참값
+
+| 절 | 설정 | 참값 |
+|---|---|---|
+| 2 | [2장](02_probability.qmd)의 신생아 선별검사를 두 번 | 유병률 1/5000, 민감도·특이도 99% |
+| 3 | 연구실 5곳이 HFD 마우스 10마리씩 *Cd36* 측정 | 전체 평균 6.0, 연구실 사이 SD 0.5, 마우스 사이 SD 0.8 |
+| 4 | 유전자 2000개의 log2 fold change 추정 | 참 LFC ~ N(0, 0.5²), 유전자별 SE 0.1–1.5 |
+| 5 | 유전자 5000개, 3 + 3마리로 분산 추정 | 유전자별 참 분산이 0.25 근처에서 다름 |
+
+- 난수는 절마다 `set.seed()`로 고정 (`set.seed(20261027)`부터)
+:::
+
+# 1. 빈도주의 vs 베이지안
+
+| | 빈도주의 (이 책의 4–10장) | 베이지안 |
+|---|---|---|
+| 모수 μ | **고정된** 값 (모를 뿐) | 불확실하니 **확률분포**로 표현 |
+| 흔들리는 것 | 자료, 그리고 자료로 만든 구간 | μ에 대한 우리의 믿음 |
+| 출발점 | 자료만 | **사전분포** (prior) + 자료 |
+| 결과 | 추정값, 신뢰구간, p-value | **사후분포** (posterior) |
+| 구간의 뜻 | 방법을 반복하면 95%가 μ를 포함 ([5장](05_confidence_intervals.qmd)) | μ가 이 구간에 있을 확률 95% (신용구간) |
+
+- [5장](05_confidence_intervals.qmd)에서 "참값이 이 구간에 있을 확률 95%"가 틀린 말이었던 이유 = 빈도주의에서 μ는 확률변수가 아니기 때문
+- 베이지안에서는 그 문장이 맞는 말이 됨 — 대신 사전분포를 정해야 함
+
+# 2. Bayes 정리: 믿음을 자료로 고침
+
+$$\underbrace{P(\theta \mid \text{자료})}_{\text{사후}} \;=\; \frac{\overbrace{P(\text{자료} \mid \theta)}^{\text{가능도}}\;\overbrace{P(\theta)}^{\text{사전}}}{P(\text{자료})}$$
+
+- [2장](02_probability.qmd)의 선별검사가 바로 이것: 사전 = 유병률, 가능도 = 민감도·특이도, 사후 = 양성일 때 환자일 확률
+- 첫 번째 검사의 사후가 두 번째 검사의 사전이 됨
+
+```{r}
+#| label: bayes-update
+posterior <- function(prior, sens = 0.99, spec = 0.99)
+  sens * prior / (sens * prior + (1 - spec) * (1 - prior))
+
+after1 <- posterior(1/5000)     # 양성 한 번
+after2 <- posterior(after1)     # 독립적인 검사로 또 양성
+c(prior = 1/5000, after_1st = after1, after_2nd = after2)
+```
+
+| 단계 | 환자일 확률 |
+|---|---|
+| 검사 전 (사전 = 유병률) | 0.0002 |
+| 양성 1번 | 0.0194 |
+| 양성 2번 | 0.662 |
+
+- 같은 검사 결과라도 **출발점(사전)**이 다르면 결론이 다름
+- 자료가 쌓일수록 사전의 영향은 줄고 자료가 결론을 정함
+
+# 3. 변동의 층: hierarchical model
 
 ::: {.callout-warning}
-## 작성 예정
-이 장은 아직 쓰는 중입니다. 다룰 내용:
-
-1. 빈도주의 vs 베이지안: 모수는 고정인가 확률변수인가
-2. Bayes 정리
-3. hierarchical model과 shrinkage
-4. DESeq2·limma가 유전자끼리 분산을 빌려오는 이유
-5. 더 배우기: [4. Bayes](https://kkonoo.github.io/4_Bayes/)
-
-처음엔 여기서 헷갈려요: 이 모델이 pollster 간 변동을 설명 못 한다는데 왜? → 변동의 층(level)
+## 처음엔 여기서 헷갈려요
+- 공부 노트의 메모: **"이 모델이 pollster 간 변동을 설명 못 한다는데 왜?"**
+- 원자료의 여론조사 모형은 모든 조사를 "같은 참값에서 뽑은 표본"으로 보고 **표본추출의 우연**만 넣었음
+- 그런데 조사기관(pollster)마다 고유한 치우침이 있음 → 변동이 **두 층**: 기관 사이 + 기관 안
+- 아래 층(표본추출)만 넣은 모형은 위 층(기관 차이)을 모르므로 불확실성을 **과소평가**
+- 생물학에서는 연구실, batch, 코호트가 같은 역할 — [0장](00_why_statistics.qmd)의 의사반복과 같은 이야기
 :::
+
+## 1) 연구실 5곳의 마우스 실험
+
+- 연구실 5곳이 같은 조건(HFD)에서 마우스 10마리씩 *Cd36* 발현을 잼
+- 연구실마다 사육 환경, 시약, 손이 달라 **연구실 고유의 치우침**이 있음
+
+$$y_{lj} = \mu + a_l + \varepsilon_{lj}, \qquad a_l \sim N(0, 0.5^2), \quad \varepsilon_{lj} \sim N(0, 0.8^2)$$
+
+- $l$ = 연구실, $j$ = 마우스. 알고 싶은 것은 전체 평균 μ = 6.0
+
+```{r}
+#| label: levels
+one_study <- function() {
+  lab <- rnorm(5, 0, 0.5)                                            # 연구실 효과 (위 층)
+  y   <- matrix(6.0 + rep(lab, each = 10) + rnorm(50, 0, 0.8), nrow = 10)   # 열 = 연구실
+  lab_means <- colMeans(y)
+  c(naive = mean(y) + c(-1, 1) * qt(0.975, 49) * sd(as.vector(y)) / sqrt(50),  # 50마리를 독립으로
+    level = mean(lab_means) + c(-1, 1) * qt(0.975, 4) * sd(lab_means) / sqrt(5))  # 연구실 평균 5개로
+}
+set.seed(20261027)
+round(one_study(), 2)
+
+set.seed(2)
+cover <- replicate(5000, {
+  r <- unname(one_study())
+  c(naive = r[1] <= 6 & 6 <= r[2], level = r[3] <= 6 & 6 <= r[4])
+})
+rowMeans(cover)        # 95% 신뢰구간이 참값 6.0을 포함한 비율
+```
+
+| 분석 | 무엇을 반복 단위로 보나 | 95% 구간의 실제 포함률 |
+|---|---|---|
+| 마우스 50마리를 독립으로 | 마우스 (아래 층만) | 0.691 |
+| 연구실 평균 5개로 | 연구실 (위 층까지) | 0.943 |
+
+- 아래 층만 본 구간은 "95%"라고 쓰고 실제로는 69%만 맞음 — 연구실 사이 변동을 무시했기 때문
+- **hierarchical model (계층 모형)** 은 두 층을 모두 모형에 넣음: 마우스는 연구실 안에, 연구실은 전체 안에
+
+# 4. Shrinkage: 유전자끼리 정보를 빌린다
+
+## 1) fold change 추정의 문제
+
+- RNA-seq에서 유전자 2000개의 log2 fold change(LFC)를 추정
+- 발현이 낮은 유전자는 count가 적어 추정이 아주 부정확 (SE가 큼, [3장](03_distributions.qmd))
+- 그런데 대부분 유전자의 참 LFC는 0 근처 → 유전자 **전체의 분포**가 사전분포 역할을 할 수 있음
+
+$$\text{참 LFC}_g \sim N(0, \tau^2), \qquad \widehat{\text{LFC}}_g \mid \text{참 LFC}_g \sim N(\text{참 LFC}_g,\ \text{SE}_g^2)$$
+
+- 이 두 층을 합치면 사후평균은
+
+$$E[\text{참 LFC}_g \mid \widehat{\text{LFC}}_g] = \underbrace{\frac{\tau^2}{\tau^2 + \text{SE}_g^2}}_{B_g} \times \widehat{\text{LFC}}_g$$
+
+- $B_g$는 0과 1 사이: SE가 크면(믿기 어려우면) 0 쪽으로 많이 당기고, 작으면 거의 그대로 둠
+- $\tau^2$는 모든 유전자의 추정값에서 거꾸로 추정 → **유전자끼리 정보를 빌림**
+
+```{r}
+#| label: shrink
+set.seed(3)
+true_lfc <- rnorm(2000, 0, 0.5)
+se       <- runif(2000, 0.1, 1.5)            # 발현이 낮을수록 SE가 큼
+est      <- true_lfc + rnorm(2000, 0, se)    # 유전자별 추정값
+
+tau2   <- max(0, var(est) - mean(se^2))      # 전체 분산 − 추정 잡음 = 참 LFC의 분산
+shrunk <- tau2 / (tau2 + se^2) * est
+tau2
+
+c(mse_raw    = mean((est    - true_lfc)^2),   # 참값과의 평균 제곱 오차
+  mse_shrunk = mean((shrunk - true_lfc)^2))
+```
+
+```{r}
+#| label: fig-shrink
+#| dev: "png"
+#| fig-cap: "유전자 2000개의 참 LFC와 추정 LFC. 왼쪽: 그대로, 오른쪽: shrinkage. 보라: SE가 큰 유전자(SE > 1), 회색 선: 추정 = 참값"
+#| fig-height: 4
+par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
+noisy <- se > 1
+for (k in list(list(est, "그대로"), list(shrunk, "shrinkage"))) {
+  plot(true_lfc, k[[1]], pch = 19, cex = 0.5, las = 1, ylim = c(-5, 5),
+       col = ifelse(noisy, "#5B4D80", "grey70"), main = k[[2]],
+       xlab = "참 LFC", ylab = "추정 LFC")
+  abline(0, 1, col = "grey40")
+}
+```
+
+- 참값 τ² = 0.25, 자료에서 추정 0.259
+- 참값과의 평균 제곱 오차: 그대로 0.82 → shrinkage 0.15
+- 왼쪽: SE가 큰 유전자(보라)가 ±4까지 흩어짐
+- 오른쪽: SE가 큰 유전자일수록 0 쪽으로 많이 당겨짐 → 전체 오차는 크게 줄어듦
+- 대가: 참 LFC가 큰 유전자도 조금 작게 추정됨 (오른쪽 그림에서 대각선보다 0 쪽)
+
+## 2) 가장 크게 변한 유전자 20개
+
+```{r}
+#| label: top20
+top_raw    <- order(-abs(est))[1:20]
+top_shrunk <- order(-abs(shrunk))[1:20]
+rbind(raw    = c(mean_SE = mean(se[top_raw]),    mean_abs_true = mean(abs(true_lfc[top_raw]))),
+      shrunk = c(mean_SE = mean(se[top_shrunk]), mean_abs_true = mean(abs(true_lfc[top_shrunk]))))
+```
+
+- 추정값 그대로 고른 상위 20개: 평균 SE 1.30, 참 |LFC|는 평균 0.53 → **잡음이 큰 유전자**가 뽑힘
+- shrinkage 후 상위 20개: 평균 SE 0.27, 참 |LFC| 평균 1.14 → 진짜로 크게 변한 유전자가 뽑힘
+- [7장](07_power.qmd)의 winner's curse를 줄이는 방법 = DESeq2의 `lfcShrink()`가 하는 일
+
+# 5. DESeq2·limma가 분산을 빌려오는 이유
+
+- 마우스 3 + 3마리면 유전자마다 분산 추정의 자유도가 4 → 아주 부정확 ([1장](01_describing_data.qmd) 4절)
+- 우연히 분산이 아주 작게 나온 유전자는 t 값이 커져서 **가짜 발견**이 됨
+- 해결: 유전자 각자의 분산을 **모든 유전자의 전형적인 분산 쪽으로** 당김 (limma의 moderated t)
+
+$$\tilde{s}_g^2 = \frac{d_0\, s_0^2 + d\, s_g^2}{d_0 + d}$$
+
+- $s_0^2$: 유전자 전체의 전형적인 분산(사전), $d_0$: 사전을 몇 마리 분량으로 믿을지, $d$: 이 유전자의 자유도
+
+```{r}
+#| label: moderated
+set.seed(4)
+true_var <- 0.25 * 10 / rchisq(5000, df = 10)       # 유전자마다 다른 참 분산
+s2       <- true_var * rchisq(5000, df = 4) / 4     # 3 + 3마리로 추정한 분산 (자유도 4)
+s0_2     <- mean(s2)                                # 전체의 전형적인 분산
+d0       <- 10                                      # 사전의 무게 (limma는 자료에서 추정)
+moderated <- (d0 * s0_2 + 4 * s2) / (d0 + 4)
+
+c(mse_raw = mean((s2 - true_var)^2), mse_moderated = mean((moderated - true_var)^2),
+  under2x_raw = mean(s2 < true_var / 2),            # 참 분산의 절반 미만으로 추정된 비율
+  under2x_moderated = mean(moderated < true_var / 2))
+```
+
+| | 그대로 | 빌려온 분산 |
+|---|---|---|
+| 참 분산과의 평균 제곱 오차 | 0.062 | 0.020 |
+| 참 분산의 절반도 안 되게 추정된 유전자 | 25.4% | 2.7% |
+
+- 분산을 크게 과소추정하는 유전자가 25.4% → 2.7%로 줄어듦 → 가짜 발견이 줄고 검정력은 오름
+- DESeq2도 같은 생각으로 유전자별 dispersion φ ([3장](03_distributions.qmd))를 평균-dispersion 추세 쪽으로 당김
+
+::: {.callout-tip}
+## 한 줄 요약: 왜 유전자끼리 빌리나
+- 유전자 하나는 시료가 적어 정보가 부족하지만, **유전자는 수만 개**
+- "유전자들은 대체로 이렇다"는 분포를 자료에서 배워 사전분포로 쓰고, 정보가 부족한 유전자일수록 그쪽으로 당김
+- 이것이 empirical Bayes — 3–4절의 계층 모형(유전자 안 + 유전자 사이)을 자료로 적합한 것
+:::
+
+# 6. 더 배우기
+
+- 베이지안 통계는 [4. Bayes](https://kkonoo.github.io/4_Bayes/)에서 이어짐
+  - 사전분포 고르기, 켤레 사전분포
+  - 사후분포 계산과 MCMC
+  - 계층 모형을 제대로 적합하기
+  - 신용구간과 사후 예측
+
+# 7. 정리
+
+- 빈도주의는 μ를 고정으로, 베이지안은 μ를 확률분포로 봄 → 사전 + 자료 = 사후
+- Bayes 정리로 믿음을 갱신: 선별검사 양성 1번 1.94%, 2번 66.2%
+- 변동에는 층이 있음 (연구실·batch 사이, 그 안). 아래 층만 보면 불확실성을 과소평가
+- 유전자가 많으면 유전자 전체의 분포를 사전분포로 써서 정보를 빌림 (empirical Bayes)
+- LFC shrinkage는 잡음이 큰 유전자의 과장된 fold change를 줄이고, 분산 빌리기는 우연히 작은 분산으로 생기는 가짜 발견을 줄임
+
+# 연습문제
+
+1. 2절에서 유병률이 1/100인 집단이라면 양성 1번, 2번 뒤의 확률은 얼마인가? 사전분포가 결론에 미치는 영향을 설명하라.
+2. 3절에서 연구실 사이 SD를 0으로 바꾸면 두 분석의 포함률은 어떻게 되는가? 1.0으로 바꾸면?
+3. 4절에서 SE를 모두 0.1로 같게 하면 shrinkage의 정도($B_g$)는 얼마인가? shrinkage가 거의 일어나지 않는 이유를 설명하라.
+4. 5절에서 `d0`를 1과 100으로 바꿔 보라. 평균 제곱 오차는 어떻게 변하는가? `d0`가 너무 크면 어떤 문제가 생길까?
