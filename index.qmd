@@ -34,7 +34,7 @@ format:
 | | [1](chapters/01_describing_data.qmd) | 데이터의 종류와 요약 | 초안 |
 | | [2](chapters/02_probability.qmd) | 확률과 확률변수 | 초안 |
 | | [3](chapters/03_distributions.qmd) | 분포: 이항, 포아송, 음이항, 정규 | 초안 |
-| **2** 추정 | [4](chapters/04_sampling_clt.qmd) | 표본과 모집단, 중심극한정리 | 작성 예정 |
+| **2** 추정 | [4](chapters/04_sampling_clt.qmd) | 표본과 모집단, 중심극한정리 | 초안 |
 | | [5](chapters/05_confidence_intervals.qmd) | 추정과 신뢰구간 | 작성 예정 |
 | **3** 검정 | [6](chapters/06_hypothesis_testing.qmd) | **가설검정의 논리와 p-value** | 초안 |
 | | [7](chapters/07_power.qmd) | 오류와 검정력 | 작성 예정 |
