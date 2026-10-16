@@ -1,0 +1,34 @@
+---
+title: "4. 표본과 모집단"
+description: "모수와 추정량, 표집분포, 중심극한정리, SD vs SE"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="4. 표본과 모집단">
+        <meta name="ai-context" content="
+        이 챕터는 모수와 추정량, 표집분포, 중심극한정리, SD vs SE를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- PH125 `1.parameters and estimates`, `2.the central limit theorem in practice` 강의
+- `2_parameters-estimates.Rmd`, `3_clt.Rmd` — 구조 참고
+- study_1, study_2
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 모집단·표본·모수·추정량
+2. 표집분포: 실험을 1000번 반복하면
+3. 중심극한정리를 시뮬레이션으로
+4. SD와 SE는 다르다
+5. 표본이 크면 완벽한가? — bias
+
+처음엔 여기서 헷갈려요: 아주 큰 표본이면 무조건 정확할까? (bias)
+:::

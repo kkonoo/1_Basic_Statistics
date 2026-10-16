@@ -1,0 +1,30 @@
+---
+title: "10. 다중검정"
+description: "2만 개 유전자를 검정하면 — p-value histogram, Bonferroni, FDR"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="10. 다중검정">
+        <meta name="ai-context" content="
+        이 챕터는 2만 개 유전자를 검정하면 — p-value histogram, Bonferroni, FDR를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- 없음 — 새로 작성
+- DALS Inference for High Dimensional Data — 목차 참고
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 유전자 2만 개를 p < 0.05로 검정하면 몇 개가 우연히 걸릴까
+2. p-value histogram 읽기
+3. FWER과 Bonferroni
+4. FDR과 Benjamini-Hochberg, q-value
+:::

@@ -1,0 +1,33 @@
+---
+title: "7. 오류와 검정력"
+description: "Type I/II 오류, 효과크기, 검정력, 표본 크기"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="7. 오류와 검정력">
+        <meta name="ai-context" content="
+        이 챕터는 Type I/II 오류, 효과크기, 검정력, 표본 크기를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- PH125 `3_C.I_and_P_value-4_Power` 강의
+- study_1 (power 메모)
+- DALS Power Calculations — 목차 참고
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 두 가지 오류: Type I과 Type II
+2. 검정력 = 진짜 효과를 잡을 확률
+3. 효과크기, 표본 크기, 분산과 검정력의 관계
+4. 시뮬레이션으로 표본 크기 정하기
+
+처음엔 여기서 헷갈려요: 표본이 작으면 신뢰구간이 0을 포함해서 진짜 차이도 못 잡는다
+:::

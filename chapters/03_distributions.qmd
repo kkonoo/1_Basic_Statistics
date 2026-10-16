@@ -1,0 +1,32 @@
+---
+title: "3. 분포"
+description: "이항 → 포아송 → 음이항 → 정규, RNA-seq count가 음이항인 이유"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="3. 분포">
+        <meta name="ai-context" content="
+        이 챕터는 이항 → 포아송 → 음이항 → 정규, RNA-seq count가 음이항인 이유를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- `regression models for count data in R.pdf`
+- GT `4-IV. (Poisson) Basic Concepts and Estimation`
+- DALS Statistical Models — 목차 참고
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 이항분포: 성공/실패를 n번
+2. 포아송분포: 드문 사건의 개수, 평균 = 분산
+3. 음이항분포: 과산포(overdispersion)와 RNA-seq
+4. 정규분포와 표준화
+5. 최대가능도 추정(MLE) 맛보기
+:::

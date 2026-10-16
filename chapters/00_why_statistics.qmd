@@ -1,0 +1,29 @@
+---
+title: "0. 왜 통계인가"
+description: "측정에는 변동이 있다 — biological vs technical replicate"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="0. 왜 통계인가">
+        <meta name="ai-context" content="
+        이 챕터는 측정에는 변동이 있다 — biological vs technical replicate를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- 없음 — 새로 작성
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 같은 시료를 두 번 시퀀싱해도 count가 다르다: 변동은 피할 수 없다
+2. biological replicate vs technical replicate
+3. 통계가 답하는 질문: 이 차이는 우연으로 설명되는가
+4. 이 책을 읽는 법: 시뮬레이션으로 참값을 알고 시작한다
+:::

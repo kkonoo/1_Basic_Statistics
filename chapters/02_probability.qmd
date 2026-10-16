@@ -1,0 +1,32 @@
+---
+title: "2. 확률과 확률변수"
+description: "조건부확률, 확률변수, 기댓값과 분산 — urn model 시뮬레이션"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="2. 확률과 확률변수">
+        <meta name="ai-context" content="
+        이 챕터는 조건부확률, 확률변수, 기댓값과 분산 — urn model 시뮬레이션를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- dsbook `prob/discrete-probability.Rmd`, `continuous-probability.Rmd`, `random-variables-sampling-models-clt.Rmd` — 구조 참고
+- study_3 (Bayes 예제 메모)
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 확률의 정의와 Monte Carlo 시뮬레이션
+2. 조건부확률과 독립
+3. 확률변수, 기댓값, 분산
+4. urn model: 상자에서 공 뽑기로 보는 확률변수
+
+처음엔 여기서 헷갈려요: 검사 정확도 99%인데 양성 중 진짜 환자는 2%뿐? → 드문 질병의 조건부확률
+:::

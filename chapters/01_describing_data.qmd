@@ -1,0 +1,32 @@
+---
+title: "1. 데이터의 종류와 요약"
+description: "count·연속형·범주형 데이터, 평균·분산·중앙값, 분포를 눈으로 보기"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="1. 데이터의 종류와 요약">
+        <meta name="ai-context" content="
+        이 챕터는 count·연속형·범주형 데이터, 평균·분산·중앙값, 분포를 눈으로 보기를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- dsbook `dataviz/distributions.Rmd` — 구조 참고
+- DALS Exploratory Data Analysis — 목차 참고
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 데이터의 종류: count, 연속형, 범주형, 순서형
+2. 중심과 퍼짐: 평균, 중앙값, 분산, 표준편차, IQR
+3. 분포 보기: histogram, boxplot, QQ plot
+4. 이상치에 강한 요약 (robust summary)
+
+처음엔 여기서 헷갈려요: 표본분산은 왜 N이 아니라 N-1로 나눌까? 왜 N-2는 아니지? → 자유도
+:::

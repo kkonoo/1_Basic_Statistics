@@ -1,0 +1,35 @@
+---
+title: "8. 검정 지도"
+description: "데이터 형태와 그룹 수로 검정 고르기 — 오믹스 예시 R 실습"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="8. 검정 지도">
+        <meta name="ai-context" content="
+        이 챕터는 데이터 형태와 그룹 수로 검정 고르기 — 오믹스 예시 R 실습를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- `Overview_of_statistical_tests.pdf`, `statistics compare.png`, `statistics.png`
+- GT cheat sheet 묶음
+- PH125 `7.Association tests` 강의, Study_5
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 검정 고르기 지도 (데이터 형태 × 그룹 수 × 짝 여부)
+2. 두 그룹 연속형: t-test vs Wilcoxon
+3. 세 그룹 이상: ANOVA vs Kruskal-Wallis
+4. 범주형: Fisher exact test, 카이제곱 검정, odds ratio
+5. 짝지은 데이터: paired t-test, McNemar
+6. 실습: 검정마다 오믹스 예시 데이터로 R 실습 1개
+
+처음엔 여기서 헷갈려요: GWAS에서 p-value만 보고하면 의미가 없다 → odds ratio를 같이
+:::

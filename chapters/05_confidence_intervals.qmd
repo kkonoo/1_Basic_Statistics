@@ -1,0 +1,32 @@
+---
+title: "5. 추정과 신뢰구간"
+description: "신뢰구간 계산, Monte Carlo로 확인, 올바른 해석"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="5. 추정과 신뢰구간">
+        <meta name="ai-context" content="
+        이 챕터는 신뢰구간 계산, Monte Carlo로 확인, 올바른 해석를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- PH125 `3.Confidence intervals and p-values` (CI, MC simulation, The Correct Language)
+- `4_confidence-intervals-p-values.Rmd` — 구조 참고
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 점추정과 구간추정
+2. 95% 신뢰구간 만들기
+3. Monte Carlo: 100번 실험하면 몇 개의 구간이 참값을 포함하나
+4. 올바른 표현과 틀린 표현
+
+처음엔 여기서 헷갈려요: "95% CI에 참값이 들어 있을 확률이 95%"는 왜 틀린 말일까?
+:::

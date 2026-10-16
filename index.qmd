@@ -1,0 +1,62 @@
+---
+title: "1. Basic Statistics"
+subtitle: "기초통계 — 확률변수에서 p-value, 다중검정까지 · 시뮬레이션으로 이해하기"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="홈 - 기초통계 강의 안내">
+        <meta name="ai-context" content="
+        이 강의는 오믹스 데이터를 다룰 대학원생을 위한 기초통계입니다. 통계·CS 전공자와 생물 전공자 모두를 대상으로 합니다.
+        Part 1 데이터와 확률(변동, 데이터 요약, 확률과 확률변수, 이항·포아송·음이항·정규분포),
+        Part 2 추정(표집분포, 중심극한정리, SD와 SE, 신뢰구간),
+        Part 3 검정(가설검정의 논리와 p-value, 오류와 검정력, 검정 고르기 지도와 실습),
+        Part 4 다음 단계로(상관과 회귀 입문, 다중검정과 FDR, 베이지안 맛보기)로 구성됩니다.
+        공식보다 시뮬레이션으로 직관을 먼저 잡고, 예제는 유전자 발현·유전체 자료를 씁니다.
+        모든 실습은 base R로 합니다. 회귀와 베이지안 심화는 3. Linear Regression, 4. Bayes 사이트로 이어집니다.
+        ">
+---
+
+## Course Overview
+
+- 오믹스 데이터를 처음 분석하는 사람이 **p-value, 신뢰구간, FDR을 정확히 읽을 수 있게** 하는 것이 목표
+- 공식보다 **시뮬레이션**이 먼저 — 참값을 정해 두고 자료를 만들어서, 방법이 맞는 답을 내는지 직접 확인
+- 예제는 전부 생물학 자료 — 유전자 발현, 유전형, 세포 수
+- 이 책 다음에: [2. Linear Algebra](https://kkonoo.github.io/2_linear_algebra/) · [3. Linear Regression](https://kkonoo.github.io/3_linear_regression/) · [4. Bayes](https://kkonoo.github.io/4_Bayes/)
+
+## Syllabus
+
+| Part | 장 | 주제 | 상태 |
+|---|---|---|---|
+| **1** 데이터와 확률 | [0](chapters/00_why_statistics.qmd) | 왜 통계인가 | 작성 예정 |
+| | [1](chapters/01_describing_data.qmd) | 데이터의 종류와 요약 | 작성 예정 |
+| | [2](chapters/02_probability.qmd) | 확률과 확률변수 | 작성 예정 |
+| | [3](chapters/03_distributions.qmd) | 분포: 이항, 포아송, 음이항, 정규 | 작성 예정 |
+| **2** 추정 | [4](chapters/04_sampling_clt.qmd) | 표본과 모집단, 중심극한정리 | 작성 예정 |
+| | [5](chapters/05_confidence_intervals.qmd) | 추정과 신뢰구간 | 작성 예정 |
+| **3** 검정 | [6](chapters/06_hypothesis_testing.qmd) | **가설검정의 논리와 p-value** | 초안 |
+| | [7](chapters/07_power.qmd) | 오류와 검정력 | 작성 예정 |
+| | [8](chapters/08_test_map.qmd) | 검정 지도와 실습 | 작성 예정 |
+| **4** 다음 단계로 | [9](chapters/09_correlation_regression.qmd) | 상관과 회귀 입문 | 작성 예정 |
+| | [10](chapters/10_multiple_testing.qmd) | 다중검정 | 작성 예정 |
+| | [11](chapters/11_bayes_intro.qmd) | 베이지안 맛보기 | 작성 예정 |
+
+## 이 사이트 읽는 법
+
+| 상자 | 뜻 |
+|---|---|
+| 파란 **note** | 원자료 출처, 부연 설명 |
+| 빨간 **important** | 핵심 정의, **실습 자료 소개와 참값** |
+| 노란 **warning** | 흔한 오해, **처음엔 여기서 헷갈려요** |
+| 초록 **tip** | 직관, 실무 팁 |
+
+- 설명은 개조식 — 한 줄에 한 정보
+- R 코드는 복사해서 그대로 실행 가능 (base R만 씀)
+- 오른쪽 아래 **AI 학습 도우미**에 지금 보고 있는 장의 내용을 물어볼 수 있음
+
+## 선수 지식
+
+- R 기본 문법 (벡터, 함수 호출) — 복습은 [3. Linear Regression 부록 B](https://kkonoo.github.io/3_linear_regression/chapters/A2_r_reference.html)
+- 고등학교 수준의 수학 (합, 평균, 제곱근)

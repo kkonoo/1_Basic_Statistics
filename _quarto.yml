@@ -1,0 +1,91 @@
+project:
+  type: website
+  execute-dir: project
+  render:
+    - index.qmd
+    - chapters/*.qmd
+
+website:
+  title: "1. Basic Statistics"
+  description: "기초통계: 확률변수와 분포에서 p-value, 다중검정까지 — 시뮬레이션으로 이해하기"
+  favicon: images/logo.ico
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+    right:
+      - icon: github
+        href: https://github.com/kkonoo/1_Basic_Statistics
+
+  sidebar:
+    style: "floating"
+    search: true
+    contents:
+      - text: "Home"
+        href: index.qmd
+      - section: "Part 1. 데이터와 확률"
+        contents:
+          - chapters/00_why_statistics.qmd
+          - chapters/01_describing_data.qmd
+          - chapters/02_probability.qmd
+          - chapters/03_distributions.qmd
+      - section: "Part 2. 추정"
+        contents:
+          - chapters/04_sampling_clt.qmd
+          - chapters/05_confidence_intervals.qmd
+      - section: "Part 3. 검정"
+        contents:
+          - chapters/06_hypothesis_testing.qmd
+          - chapters/07_power.qmd
+          - chapters/08_test_map.qmd
+      - section: "Part 4. 다음 단계로"
+        contents:
+          - chapters/09_correlation_regression.qmd
+          - chapters/10_multiple_testing.qmd
+          - chapters/11_bayes_intro.qmd
+
+  page-footer:
+    left: "Copyright 2026, Eunji"
+
+
+format:
+  html:
+    theme:
+      light: cosmo
+    css: assets/html.css
+    toc: true
+    toc-depth: 4
+    toc-title: "Contents"
+    toc-float: true
+    page-layout: full
+
+    code-fold: false
+    code-copy: true
+    highlight-style: github
+
+    number-sections: false
+    smooth-scroll: true
+
+    # 그림은 SVG 벡터로 출력
+    fig-format: svg
+    fig-width: 7
+    fig-height: 4.5
+    fig-dpi: 300
+
+    # 수식은 LaTeX + MathJax
+    html-math-method: mathjax
+
+    # AI 채팅 위젯 전역 설정
+    include-after-body: assets/ai-chat-init.html
+
+  revealjs:
+    css: assets/revealjs.css
+    fig-format: svg
+
+
+execute:
+  freeze: auto          # 코드 실행 결과 캐시 (빠른 빌드)
+  echo: true
+  eval: true            # R 코드를 실제로 실행해 플롯 생성
+  warning: false
+  message: false

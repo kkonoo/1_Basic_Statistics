@@ -1,0 +1,30 @@
+---
+title: "9. 상관과 회귀 입문"
+description: "상관 ≠ 인과, 단순회귀, 교란 — 심화는 3. Linear Regression"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="9. 상관과 회귀 입문">
+        <meta name="ai-context" content="
+        이 챕터는 상관 ≠ 인과, 단순회귀, 교란 — 심화는 3. Linear Regression를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- GT `1-I`, `1-II` (Simple)
+- dsbook `regression/*.Rmd` — 구조 참고
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 산점도와 상관계수 (Pearson, Spearman)
+2. 상관은 인과가 아니다: 교란
+3. 단순선형회귀 한 장 요약
+4. 더 배우기: [3. Linear Regression](https://kkonoo.github.io/3_linear_regression/)
+:::

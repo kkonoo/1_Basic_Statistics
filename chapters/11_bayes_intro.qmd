@@ -1,0 +1,34 @@
+---
+title: "11. 베이지안 맛보기"
+description: "prior·posterior, hierarchical model, shrinkage — 심화는 4. Bayes"
+author: "Eunji Ha"
+date: today
+format:
+  html:
+    include-in-header:
+      text: |
+        <meta name="ai-title" content="11. 베이지안 맛보기">
+        <meta name="ai-context" content="
+        이 챕터는 prior·posterior, hierarchical model, shrinkage — 심화는 4. Bayes를 다룹니다. (초안 작성 전)
+        ">
+---
+
+::: {.callout-note collapse="true"}
+## 원자료
+- PH125 `5.Bayesian statistics` 강의
+- `6_bayes.Rmd` — 구조 참고
+- study_3, study_4
+:::
+
+::: {.callout-warning}
+## 작성 예정
+이 장은 아직 쓰는 중입니다. 다룰 내용:
+
+1. 빈도주의 vs 베이지안: 모수는 고정인가 확률변수인가
+2. Bayes 정리
+3. hierarchical model과 shrinkage
+4. DESeq2·limma가 유전자끼리 분산을 빌려오는 이유
+5. 더 배우기: [4. Bayes](https://kkonoo.github.io/4_Bayes/)
+
+처음엔 여기서 헷갈려요: 이 모델이 pollster 간 변동을 설명 못 한다는데 왜? → 변동의 층(level)
+:::
