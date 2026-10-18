@@ -145,6 +145,15 @@ summary(lm(geneB ~ geneA + purity))$coefficients
 - 교란을 막는 최선은 **설계** (무작위 배정, batch 균형, [4장](04_sampling_clt.qmd) 5절)
 - 막지 못했다면 측정해서 모형에 넣음 → 다중회귀 ([3. Linear Regression](https://kkonoo.github.io/3_linear_regression/))
 
+**직접 해 보기** — [교란변수와 배치효과 ↗](https://kkonoo.github.io/edu_sims/sims/confounding/?lang=ko){target="_blank"}
+
+::: {.column-page}
+```{=html}
+<iframe src="https://kkonoo.github.io/edu_sims/sims/confounding/?embed=1&lang=ko" title="교란변수와 배치효과" loading="lazy"
+        style="width: 100%; height: 1300px; border: 0;"></iframe>
+```
+:::
+
 # 3. 단순선형회귀 한 장 요약
 
 ## 1) 모형
@@ -203,6 +212,15 @@ summary(lm(c(chow, hfd) ~ diet))$coefficients
 
 - `dietHFD`의 계수 1.04 = 평균 차이, p = 0.080 = 6장의 등분산 t-검정과 같음
 - [8장](08_test_map.qmd)의 ANOVA, eQTL 회귀, DESeq2·limma의 모형도 모두 이 틀(선형모형)의 확장
+:::
+
+**직접 해 보기** — [최소제곱: 잔차·이상치·leverage ↗](https://kkonoo.github.io/edu_sims/sims/least-squares/?lang=ko){target="_blank"}
+
+::: {.column-page}
+```{=html}
+<iframe src="https://kkonoo.github.io/edu_sims/sims/least-squares/?embed=1&lang=ko" title="최소제곱: 잔차·이상치·leverage" loading="lazy"
+        style="width: 100%; height: 1300px; border: 0;"></iframe>
+```
 :::
 
 # 4. 더 배우기

@@ -261,6 +261,15 @@ round(mean(fdp["false_ratio", ]), 3)     # 평균
 - Storey의 q-value는 $\pi_0$를 추정해 BH보다 조금 더 찾음 (BH는 $\pi_0 = 1$로 보수적으로 가정)
 :::
 
+**직접 해 보기** — [다중검정과 FDR ↗](https://kkonoo.github.io/edu_sims/sims/multiple-testing/?lang=ko&m=20000){target="_blank"}
+
+::: {.column-page}
+```{=html}
+<iframe src="https://kkonoo.github.io/edu_sims/sims/multiple-testing/?embed=1&lang=ko&m=20000" title="다중검정과 FDR" loading="lazy"
+        style="width: 100%; height: 1300px; border: 0;"></iframe>
+```
+:::
+
 # 5. 무엇을 쓸까
 
 | 상황 | 방법 | R |
