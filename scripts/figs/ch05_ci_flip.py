@@ -18,7 +18,7 @@ LABELS = {
                msg2=r"그래서 실험을 반복하면 $\bar{x} \pm 1.96\,\sigma/\sqrt{n}$ 구간의 95%가 $\mu$를 포함함"),
     "en": dict(p1=r"① $\mu$ is fixed, $\bar{x}$ varies by experiment",
                band=r"$\mu \pm 1.96\,\sigma/\sqrt{n}$ : 95% of $\bar{x}$ fall here",
-               p2=r"② Interval $\bar{x} \pm 1.96\,\sigma/\sqrt{n}$ from each $\bar{x}$",
+               p2=r"② $\bar{x} \pm 1.96\,\sigma/\sqrt{n}$ for each $\bar{x}$",
                hit=r"contains $\mu$", miss=r"misses $\mu$",
                msg1=rf"$\bar{{x}}$ within {SE} of $\mu$  =  $\mu$ within {SE} of $\bar{{x}}$  (same event)",
                msg2=r"So over repeated experiments, 95% of the intervals $\bar{x} \pm 1.96\,\sigma/\sqrt{n}$ contain $\mu$"),
@@ -40,9 +40,10 @@ def draw(t, path):
     label(ax, MU, YT - 0.56, r"$\mu$", fs=13, w="bold")
     label(ax, MU, YT + 0.56, t["band"], fs=12)
 
-    # ② the interval from each x̄
+    # ② the interval from each x̄ (white backing so guide lines never show through the label)
     ys = [4.05 - 0.42 * k for k in range(len(OFF))]
-    label(ax, 0.1, 4.55, t["p2"], fs=12.5, w="bold", ha="left")
+    label(ax, 0.1, 4.55, t["p2"], fs=12.5, w="bold", ha="left",
+          bbox=dict(fc="white", ec="none", pad=2))
     ax.plot([MU, MU], [ys[-1] - 0.3, ys[0] + 0.3], color=TEXT2, lw=1.2, ls=(0, (4, 3)), zorder=2)
     label(ax, MU, ys[-1] - 0.48, r"$\mu$", fs=12.5, w="bold")
 

@@ -26,9 +26,9 @@ GAP = 0.04
 
 
 def frame(ax, t, x0):
-    """Parent labels and allele letters around a 2 × 2 grid with left edge x0."""
+    """Parent labels and allele letters around a 2 × 2 grid with left edge x0 (all horizontal)."""
     label(ax, x0 + CS, YT + 0.5, t["mom"], fs=11.5, c=TEXT2)
-    label(ax, x0 - 0.5, YB + CS, t["dad"], fs=11.5, c=TEXT2, rotation=90)
+    label(ax, x0 - 0.42, YB + CS, t["dad"], fs=11.5, c=TEXT2, ha="right")
     for k, a in enumerate("Aa"):
         label(ax, x0 + CS * (k + 0.5), YT + 0.2, a, fs=13, w="bold")
         label(ax, x0 - 0.2, YT - CS * (k + 0.5), a, fs=13, w="bold")
@@ -49,7 +49,7 @@ def draw(t, path):
     fig, ax = new(8.4, 4.7)
 
     # ① full Punnett square: four equal cells
-    xa = 0.85
+    xa = 1.0
     label(ax, 0.1, 4.45, t["p1"], fs=12.5, w="bold", ha="left")
     frame(ax, t, xa)
     for r in range(2):
@@ -57,11 +57,11 @@ def draw(t, path):
             cell(ax, xa, r, c, FAINT, ec=LINE, lw=1.2, tc=TEXT)
     label(ax, xa + CS, YB - 0.35, t["each"], fs=11.5, c=TEXT2)
 
-    arrow(ax, xa + 2 * CS + 0.15, YB + CS, 3.6, YB + CS, color="#9AA1AB", lw=1.6, ms=13)
+    arrow(ax, xa + 2 * CS + 0.15, YB + CS, 3.55, YB + CS, color="#9AA1AB", lw=1.6, ms=13)
 
     # ② condition: dominant phenotype (3 cells); event inside it: Aa (2 cells)
-    xb = 4.35
-    label(ax, 3.75, 4.45, t["p2"], fs=12.5, w="bold", ha="left")
+    xb = 4.6
+    label(ax, 3.7, 4.45, t["p2"], fs=12.5, w="bold", ha="left")
     frame(ax, t, xb)
     cell(ax, xb, 0, 0, COND_C)
     cell(ax, xb, 0, 1, EVENT_C)
@@ -72,7 +72,7 @@ def draw(t, path):
     ax.add_patch(mp.Polygon(L, closed=True, fill=False, ec=EDGE_C, lw=2.4, joinstyle="round", zorder=6))
 
     # key to the right of grid ②
-    sx, sw = xb + 2 * CS + 0.25, 0.24
+    sx, sw = xb + 2 * CS + 0.22, 0.24
     keys = [(YT - 0.3, dict(fc=COND_C, ec=EDGE_C, lw=2.0), t["lg_cond"], TEXT),
             (YT - 0.75, dict(fc=EVENT_C, ec="none"), t["lg_event"], TEXT),
             (YB + CS / 2, dict(fc="white", ec=TEXT2, lw=1.1, ls=(0, (3, 2))), t["lg_out"], TEXT2)]
