@@ -32,7 +32,7 @@ format:
 ::: {.callout-important collapse="true"}
 ## 실습 설정과 참값
 
-- 이 장은 표 하나 대신 **확률 모형 네 가지**를 씀. 모두 참값을 계산할 수 있으므로 시뮬레이션 결과를 채점할 수 있음
+- 이 장은 자료 하나 대신 **확률 모형 다섯 가지**를 씀. 모두 참값을 계산할 수 있으므로 시뮬레이션 결과를 채점할 수 있음
 
 | 설정 | 내용 | 참값 |
 |---|---|---|
@@ -78,7 +78,7 @@ table(pups)[c("AA", "Aa", "aa")] / 10000
 run <- cumsum(pups == "aa") / seq_along(pups)   # 처음 k마리까지의 aa 비율
 run[c(10, 100, 1000, 10000)]
 
-plot(run, type = "l", log = "x", col = "#5B4D80", lwd = 2, las = 1, ylim = c(0, 1),
+plot(run, type = "l", log = "x", col = "#1F5236", lwd = 2, las = 1, ylim = c(0, 1),
      xlab = "새끼 수 (로그 척도)", ylab = "aa 비율")
 abline(h = 0.25, col = "grey70", lwd = 2, lty = 2)
 ```
@@ -201,7 +201,7 @@ mean(disease[positive])             # 양성 중 진짜 환자의 비율
 | 건강 | **999.8** | 98,980.2 | 99,980 |
 | 합 | 1,019.6 | 98,980.4 | 100,000 |
 
-- 양성 1,019.6명 중 환자 19.8명 → $19.8 / 1019.6 = $ **1.94%**
+- 양성 1,019.6명 중 환자 19.8명 → $19.8 / 1019.6 =$ **1.94%**
 - 가짜 양성이 많은 이유: 1%라는 작은 비율이 **아주 큰 집단(건강한 99,980명)**에 곱해짐
 - 질병이 드물수록 양성 중 대부분은 가짜 양성
 
@@ -215,14 +215,14 @@ $$P(\text{환자} \mid +) = \frac{P(+ \mid \text{환자})\,P(\text{환자})}{P(+
 
 ```{r}
 #| label: fig-ppv
-#| fig-cap: "유병률에 따른 '양성 중 진짜 환자의 비율'. 보라: 민감도·특이도 99%, 회색: 특이도만 99.9%"
+#| fig-cap: "유병률에 따른 '양성 중 진짜 환자의 비율'. 초록: 민감도·특이도 99%, 회색: 특이도만 99.9%"
 #| fig-height: 3.5
 ppv <- function(prev, sens = 0.99, spec = 0.99)
   sens * prev / (sens * prev + (1 - spec) * (1 - prev))
 
 c(rare = ppv(1/5000), common = ppv(1/100), better_spec = ppv(1/5000, spec = 0.999))
 
-curve(ppv(x), from = 1e-5, to = 0.5, log = "x", lwd = 2, col = "#5B4D80", las = 1,
+curve(ppv(x), from = 1e-5, to = 0.5, log = "x", lwd = 2, col = "#1F5236", las = 1,
       ylim = c(0, 1), xlab = "유병률 (로그 척도)", ylab = "양성 중 진짜 환자")
 curve(ppv(x, spec = 0.999), add = TRUE, lwd = 2, lty = 2, col = "grey70")
 abline(v = 1/5000, col = "grey40", lty = 3)
@@ -263,7 +263,7 @@ table(X) / 10000
 #| label: fig-litter
 #| fig-cap: "한 배 새끼 8마리 중 aa의 수. 1만 배를 시뮬레이션"
 #| fig-height: 3.5
-barplot(table(factor(X, levels = 0:8)) / 10000, col = "#5B4D80", border = NA, las = 1,
+barplot(table(factor(X, levels = 0:8)) / 10000, col = "#1F5236", border = NA, las = 1,
         xlab = "aa 새끼 수 X", ylab = "비율")
 ```
 
@@ -317,7 +317,7 @@ range(S)
 #| label: fig-urn
 #| fig-cap: "세포 100개 캡처를 1만 번 반복했을 때 T 세포 수. 회색 선은 기댓값 30"
 #| fig-height: 3.5
-hist(S, breaks = seq(min(S) - 0.5, max(S) + 0.5, by = 1), col = "#5B4D80", border = "white",
+hist(S, breaks = seq(min(S) - 0.5, max(S) + 0.5, by = 1), col = "#1F5236", border = "white",
      las = 1, main = "", xlab = "T 세포 수 S (100개 중)", ylab = "횟수")
 abline(v = 30, col = "grey70", lwd = 2, lty = 2)
 ```
@@ -364,7 +364,7 @@ abline(v = 30, col = "grey70", lwd = 2, lty = 2)
 curve(dnorm(x, mean = 30, sd = 3), from = 18, to = 42, lwd = 2, col = "grey40",
       las = 1, xlab = "체중 (g)", ylab = "확률밀도")
 xs <- seq(35, 42, length.out = 100)
-polygon(c(35, xs, 42), c(0, dnorm(xs, 30, 3), 0), col = "#5B4D80", border = NA)
+polygon(c(35, xs, 42), c(0, dnorm(xs, 30, 3), 0), col = "#1F5236", border = NA)
 ```
 
 ## 2) R의 d·p·q·r 함수
