@@ -67,7 +67,7 @@ plot(geneA, geneB, pch = 19, col = "#5B4D80", las = 1,
 
 $$r = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum (x_i - \bar{x})^2}\sqrt{\sum (y_i - \bar{y})^2}}$$
 
-- −1부터 1까지. **직선 관계**가 얼마나 강한지
+- r은 −1부터 1까지의 값으로 **직선 관계**가 얼마나 강한지를 나타냄
 - 두 변수를 z-score로 바꿔 곱한 것의 평균에 가까움 ([3장](03_distributions.qmd))
 
 ```{r}
@@ -77,7 +77,8 @@ cor(geneA, geneB, method = "spearman")
 ```
 
 - Pearson r = 0.56 (95% CI 0.30–0.74), p = 0.0002
-- Spearman ρ = 0.55: 값 대신 **순위**의 상관 → 직선이 아니어도 단조 관계면 잡고, 이상치에 강함
+- Spearman ρ = 0.55: 값 대신 **순위**의 상관
+- 순위를 쓰므로 직선이 아니어도 단조 관계면 잡고, 이상치에 강함
 
 ## 3) 이상치 하나
 
@@ -210,7 +211,7 @@ diet <- factor(rep(c("Chow", "HFD"), each = 6))
 summary(lm(c(chow, hfd) ~ diet))$coefficients
 ```
 
-- `dietHFD`의 계수 1.04 = 평균 차이, p = 0.080 = 6장의 등분산 t-검정과 같음
+- `dietHFD`의 계수 1.04는 평균 차이와 같고, p = 0.080은 6장의 등분산 t-검정과 같음
 - [8장](08_test_map.qmd)의 ANOVA, eQTL 회귀, DESeq2·limma의 모형도 모두 이 틀(선형모형)의 확장
 :::
 
