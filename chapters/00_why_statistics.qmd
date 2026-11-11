@@ -109,7 +109,7 @@ par(mfrow = c(2, 1), mar = c(4, 4, 2, 1))
 brks <- seq(0, max(bio) + 10, by = 10)
 hist(tech, breaks = brks, col = "grey70", border = "white", las = 1,
      main = "기술적 반복 (같은 라이브러리)", xlab = "", xlim = c(0, 350))
-hist(bio, breaks = brks, col = "#5B4D80", border = "white", las = 1,
+hist(bio, breaks = brks, col = "#1F5236", border = "white", las = 1,
      main = "생물학적 반복 (다른 마우스)", xlab = "read count", xlim = c(0, 350))
 ```
 
@@ -125,7 +125,7 @@ hist(bio, breaks = brks, col = "#5B4D80", border = "white", las = 1,
 
 ::: {.callout-tip}
 ## 왜 생물학적 반복이 중요한가
-- 알고 싶은 것은 "이 마우스 한 마리"가 아니라 **"고지방식을 먹은 마우스 일반"**
+- 알고 싶은 것은 "이 마우스 한 마리"가 아니라 **"같은 조건의 마우스 일반"**
 - 같은 라이브러리를 100번 시퀀싱해도 마우스 한 마리에 대한 정보만 정확해짐
 - 결론을 넓히려면 **개체를 늘려야** 함
 :::
