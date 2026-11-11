@@ -70,11 +70,11 @@ c(mu = mu, sigma = sigma)
 
 ```{r}
 #| label: fig-pop
-#| fig-cap: "모집단 10만 마리의 간 중성지방. 보라 선: 모평균 μ, 회색 점선: 중앙값"
+#| fig-cap: "모집단 10만 마리의 간 중성지방. 초록 선: 모평균 μ, 회색 점선: 중앙값"
 #| fig-height: 3.5
 hist(pop, breaks = 100, col = "grey70", border = "white", las = 1, xlim = c(0, 250),
      main = "", xlab = "간 중성지방 (mg/g)", ylab = "마우스 수")
-abline(v = mu, col = "#5B4D80", lwd = 2)
+abline(v = mu, col = "#1F5236", lwd = 2)
 abline(v = median(pop), col = "grey40", lwd = 2, lty = 2)
 ```
 
@@ -110,7 +110,7 @@ c(mean = mean(means10), sd = sd(means10))
 #| label: fig-sampling
 #| fig-cap: "10마리 실험을 1000번 했을 때 표본평균의 분포(표집분포). 회색 점선: 모평균 μ"
 #| fig-height: 3.5
-hist(means10, breaks = 40, col = "#5B4D80", border = "white", las = 1,
+hist(means10, breaks = 40, col = "#1F5236", border = "white", las = 1,
      main = "", xlab = "표본평균 (mg/g)", ylab = "실험 횟수")
 abline(v = mu, col = "grey40", lwd = 2, lty = 2)
 ```
@@ -128,7 +128,7 @@ abline(v = mu, col = "grey40", lwd = 2, lty = 2)
 
 ```{r}
 #| label: fig-clt
-#| fig-cap: "표본 크기 n에 따른 표본평균의 분포(1만 번). 보라 선: 정규분포 N(μ, σ²/n)"
+#| fig-cap: "표본 크기 n에 따른 표본평균의 분포(1만 번). 초록 선: 정규분포 N(μ, σ²/n)"
 #| fig-height: 5
 set.seed(3)
 skew <- function(v) mean((v - mean(v))^3) / sd(v)^3   # 치우침: 0이면 좌우 대칭
@@ -137,7 +137,7 @@ clt <- sapply(c(2, 5, 30, 100), function(n) {
   m <- replicate(10000, mean(sample(pop, n)))
   hist(m, breaks = 50, freq = FALSE, col = "grey70", border = NA, las = 1,
        main = paste0("n = ", n), xlab = "표본평균", ylab = "")
-  curve(dnorm(x, mu, sigma / sqrt(n)), add = TRUE, col = "#5B4D80", lwd = 2)
+  curve(dnorm(x, mu, sigma / sqrt(n)), add = TRUE, col = "#1F5236", lwd = 2)
   c(n = n, sd_sim = sd(m), se_formula = sigma / sqrt(n), skewness = skew(m))
 })
 round(t(clt), 2)
@@ -200,14 +200,14 @@ round(sd_se, 2)
 
 ```{r}
 #| label: fig-sd-se
-#| fig-cap: "표본 크기에 따른 SD(회색)와 SE(보라). 점선: 공식 σ/√n"
+#| fig-cap: "표본 크기에 따른 SD(회색)와 SE(초록). 점선: 공식 σ/√n"
 #| fig-height: 3.5
 plot(ns, sd_se[, "avg_SD"], log = "x", type = "b", pch = 19, lwd = 2, col = "grey70",
      ylim = c(0, 45), las = 1, xaxt = "n", xlab = "마우스 수 n (로그 척도)", ylab = "mg/g")
 axis(1, at = ns)
-lines(ns, sd_se[, "SE_sim"], type = "b", pch = 19, lwd = 2, col = "#5B4D80")
+lines(ns, sd_se[, "SE_sim"], type = "b", pch = 19, lwd = 2, col = "#1F5236")
 curve(sigma / sqrt(x), add = TRUE, lty = 2, col = "grey40")
-legend("right", c("SD (마우스 사이)", "SE (표본평균)"), col = c("grey70", "#5B4D80"),
+legend("right", c("SD (마우스 사이)", "SE (표본평균)"), col = c("grey70", "#1F5236"),
        pch = 19, lwd = 2, bty = "n")
 ```
 
@@ -252,15 +252,15 @@ round(est, 1)
 
 ```{r}
 #| label: fig-bias
-#| fig-cap: "표본 크기에 따른 추정값 ± 2 SE. 회색: 무작위 표본, 보라: 치우친 표본, 점선: 참값 μ"
+#| fig-cap: "표본 크기에 따른 추정값 ± 2 SE. 회색: 무작위 표본, 초록: 치우친 표본, 점선: 참값 μ"
 #| fig-height: 4
 plot(ns_b, est[, "random"], log = "x", pch = 19, col = "grey60", ylim = c(20, 140), las = 1,
      xlab = "마우스 수 n (로그 척도)", ylab = "추정한 평균 중성지방 (mg/g)")
 arrows(ns_b, est[, "random"] - 2 * est[, "random_SE"], ns_b, est[, "random"] + 2 * est[, "random_SE"],
        angle = 90, code = 3, length = 0.03, col = "grey60")
-points(ns_b * 1.15, est[, "biased"], pch = 19, col = "#5B4D80")
+points(ns_b * 1.15, est[, "biased"], pch = 19, col = "#1F5236")
 arrows(ns_b * 1.15, est[, "biased"] - 2 * est[, "biased_SE"], ns_b * 1.15,
-       est[, "biased"] + 2 * est[, "biased_SE"], angle = 90, code = 3, length = 0.03, col = "#5B4D80")
+       est[, "biased"] + 2 * est[, "biased_SE"], angle = 90, code = 3, length = 0.03, col = "#1F5236")
 abline(h = mu, lty = 2, col = "grey40")
 ```
 
