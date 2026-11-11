@@ -107,7 +107,7 @@ c(type_I = mean(null_world["p", ] < 0.05),       # 효과 없는데 p < 0.05
 
 ```{r}
 #| label: fig-ci-power
-#| fig-cap: "실험 50번의 평균 차이 95% 신뢰구간. 왼쪽 그룹당 6마리, 오른쪽 20마리. 보라: 0을 포함(놓침), 회색: 0을 제외(검출). 점선: 참 차이 1.0"
+#| fig-cap: "실험 50번의 평균 차이 95% 신뢰구간. 왼쪽 그룹당 6마리, 오른쪽 20마리. 초록: 0을 포함(놓침), 회색: 0을 제외(검출). 점선: 참 차이 1.0"
 #| fig-height: 5
 set.seed(2)
 par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
@@ -116,7 +116,7 @@ for (nn in c(6, 20)) {
   miss <- r["lo", ] <= 0
   plot(NA, xlim = c(-1.5, 3), ylim = c(1, 50), las = 1, main = paste0("그룹당 ", nn, "마리"),
        xlab = "평균 차이 (HFD − Chow)", ylab = "실험 번호")
-  segments(r["lo", ], 1:50, r["hi", ], 1:50, col = ifelse(miss, "#5B4D80", "grey70"), lwd = 2)
+  segments(r["lo", ], 1:50, r["hi", ], 1:50, col = ifelse(miss, "#1F5236", "grey70"), lwd = 2)
   abline(v = 0, col = "grey40")
   abline(v = 1, col = "grey40", lty = 2)
   cat(nn, "마리: 0을 포함한 구간 ", sum(miss), " / 50\n", sep = "")
@@ -154,16 +154,16 @@ $$d = \frac{\Delta}{\sigma} = \frac{\mu_{HFD} - \mu_{Chow}}{\sigma}$$
 ns <- 2:30
 pw <- sapply(c(0.5, 1.0, 2.0), function(dl)
   sapply(ns, function(nn) power.t.test(n = nn, delta = dl, sd = sigma)$power))
-matplot(ns, pw, type = "l", lty = 1, lwd = 2, col = c("grey70", "#5B4D80", "grey40"),
+matplot(ns, pw, type = "l", lty = 1, lwd = 2, col = c("grey70", "#1F5236", "grey40"),
         las = 1, ylim = c(0, 1), xlab = "그룹당 마우스 수 n", ylab = "검정력")
 abline(h = 0.8, lty = 2, col = "grey40")
 legend("bottomright", c("Δ = 0.5 (d = 0.63)", "Δ = 1.0 (d = 1.25)", "Δ = 2.0 (d = 2.5)"),
-       col = c("grey70", "#5B4D80", "grey40"), lwd = 2, bty = "n")
+       col = c("grey70", "#1F5236", "grey40"), lwd = 2, bty = "n")
 
 set.seed(3)
 n_sim  <- c(4, 6, 8, 10, 12, 16, 20)
 pw_sim <- sapply(n_sim, function(nn) mean(replicate(5000, one_exp(nn, 1)["p"]) < 0.05))
-points(n_sim, pw_sim, pch = 19, col = "#5B4D80")
+points(n_sim, pw_sim, pch = 19, col = "#1F5236")
 round(rbind(n = n_sim, simulation = pw_sim,
             formula = sapply(n_sim, function(nn) power.t.test(n = nn, delta = 1, sd = sigma)$power)), 3)
 ```
@@ -239,12 +239,12 @@ c(all_mean    = mean(alt_world["diff", ]),         # 모든 실험의 평균 차
 
 ```{r}
 #| label: fig-winners
-#| fig-cap: "6마리 실험 1만 번의 관측된 평균 차이. 보라: p < 0.05인 실험, 회색: 나머지. 점선: 참 차이 1.0"
+#| fig-cap: "6마리 실험 1만 번의 관측된 평균 차이. 초록: p < 0.05인 실험, 회색: 나머지. 점선: 참 차이 1.0"
 #| fig-height: 3.5
 brk <- seq(floor(min(alt_world["diff", ])), ceiling(max(alt_world["diff", ])), by = 0.1)
 hist(alt_world["diff", ], breaks = brk, col = "grey70", border = "white", las = 1,
      main = "", xlab = "관측된 평균 차이", ylab = "실험 횟수")
-hist(alt_world["diff", sig], breaks = brk, col = "#5B4D80", border = "white", add = TRUE)
+hist(alt_world["diff", sig], breaks = brk, col = "#1F5236", border = "white", add = TRUE)
 abline(v = 1, lty = 2, col = "grey40")
 ```
 
