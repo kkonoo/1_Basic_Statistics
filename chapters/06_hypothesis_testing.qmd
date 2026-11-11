@@ -98,6 +98,8 @@ segments(c(0.8, 1.8), c(mean(chow), mean(hfd)), c(1.2, 2.2), c(mean(chow), mean(
 - 그렇다면 12마리 값을 아무렇게나 6마리씩 나눈 것도 **같은 세계에서 나올 수 있는 결과**
 - 12마리를 6 + 6으로 나누는 방법은 $\binom{12}{6} = 924$가지 → 전부 계산할 수 있음
 
+![값은 그대로 두고 Chow/HFD 라벨만 다시 나눔. 세로 막대는 그룹 평균, 화살표는 평균 차이(HFD − Chow). 섞기 ①–③은 924가지 나누기 가운데 세 가지](../assets/img/ch06/permutation.png)
+
 ```{r}
 #| label: perm-all
 x   <- c(chow, hfd)
