@@ -95,7 +95,7 @@ segments(c(0.8, 1.8), c(mean(chow), mean(hfd)), c(1.2, 2.2), c(mean(chow), mean(
 ## 1) 아이디어: 라벨 섞기
 
 - $H_0$가 참이면 Chow/HFD 라벨은 아무 의미가 없음
-- 그렇다면 12마리 값을 아무렇게나 6마리씩 나눠도 **같은 세계에서 나올 수 있는 결과**
+- 그렇다면 12마리 값을 아무렇게나 6마리씩 나눈 것도 **같은 세계에서 나올 수 있는 결과**
 - 12마리를 6 + 6으로 나누는 방법은 $\binom{12}{6} = 924$가지 → 전부 계산할 수 있음
 
 ```{r}
@@ -107,7 +107,7 @@ perm <- apply(idx, 2, function(i) mean(x[i]) - mean(x[-i]))
 length(perm)
 ```
 
-- `perm` = **$H_0$가 참일 때 나올 수 있는 평균 차이 924개** = 귀무분포 (null distribution)
+- `perm`에는 **$H_0$가 참일 때 나올 수 있는 평균 차이 924개**가 들어 있음 → 이것이 귀무분포 (null distribution)
 
 ## 2) 관측값을 귀무분포 위에 놓기
 
@@ -238,7 +238,7 @@ abline(v = c(-t_obs, t_obs), col = "#C0392B", lwd = 2, lty = c(2, 1))
 > *"The p-value simply reports a probability and says nothing about the significance of the finding in the context of the problem. 결론은 이야기할 수 없다는 거징?"* — 내 공부 노트
 
 - 반은 맞음: p-value 하나로는 **효과가 얼마나 큰지, 생물학적으로 중요한지** 말할 수 없음
-- p-value가 말해 주는 것은 하나: "차이가 0인 세계에서 이 결과가 얼마나 드문가"
+- p-value로 알 수 있는 것은 하나: "차이가 0인 세계에서 이 결과가 얼마나 드문가"
 - 결론을 내리려면 효과크기와 신뢰구간(5장)을 같이 봐야 함
 :::
 
