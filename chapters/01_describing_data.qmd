@@ -398,6 +398,8 @@ stripchart(weight ~ diet, data = mice, vertical = TRUE, method = "jitter",
 
 - 그룹 사이의 중심과 퍼짐을 한눈에 비교할 때 좋음
 
+![boxplot의 각 부분. 상자 끝은 Q1·Q3(상자 높이 = IQR), 굵은 선은 중앙값, 수염은 상자에서 1.5 × IQR 안의 가장 먼 값까지, 그 밖의 점은 이상치 후보 (설명용 자료)](../assets/img/ch01/boxplot_anatomy.png)
+
 ::: {.callout-tip}
 ## 표본이 작으면 점을 함께
 - boxplot은 숫자 5개(최솟값 쪽 수염, Q1, 중앙값, Q3, 최댓값 쪽 수염)로 줄인 그림
