@@ -122,10 +122,10 @@ c(welch    = t.test(ko_bad, wt)$p.value,
 par(mfrow = c(1, 2), mar = c(3, 4, 2, 1))
 for (k in list(ko, ko_bad)) {
   stripchart(list(WT = wt, KO = k), vertical = TRUE, method = "jitter", pch = 19, las = 1,
-             col = c("grey60", "#5B4D80"), ylim = c(3, 12), ylab = "log2 CPM",
+             col = c("grey60", "#1F5236"), ylim = c(3, 12), ylab = "log2 CPM",
              main = ifelse(max(k) > 10, "이상치 1개", "원래 자료"))
   segments(c(0.8, 1.8), c(mean(wt), mean(k)), c(1.2, 2.2), c(mean(wt), mean(k)),
-           lwd = 3, col = c("grey60", "#5B4D80"))
+           lwd = 3, col = c("grey60", "#1F5236"))
 }
 ```
 
@@ -162,7 +162,7 @@ round(tapply(expr, geno, mean), 2)
 boxplot(expr ~ geno, outline = FALSE, col = "white", border = "grey40", las = 1,
         xlab = "유전형", ylab = "발현 (log2)")
 stripchart(expr ~ geno, vertical = TRUE, method = "jitter", pch = 19, cex = 0.8,
-           col = "#5B4D80", add = TRUE)
+           col = "#1F5236", add = TRUE)
 ```
 
 ## 2) 왜 t-검정을 세 번 하지 않나
@@ -259,8 +259,8 @@ signif(studies, 3)
 #| fig-height: 3
 par(mar = c(4, 7, 1, 1))
 plot(studies[, "OR"], 3:1, log = "x", xlim = c(0.8, 2.5), ylim = c(0.5, 3.5), pch = 19,
-     col = "#5B4D80", cex = 1.3, yaxt = "n", xlab = "odds ratio (로그 척도)", ylab = "")
-segments(studies[, "lo"], 3:1, studies[, "hi"], 3:1, lwd = 2, col = "#5B4D80")
+     col = "#1F5236", cex = 1.3, yaxt = "n", xlab = "odds ratio (로그 척도)", ylab = "")
+segments(studies[, "lo"], 3:1, studies[, "hi"], 3:1, lwd = 2, col = "#1F5236")
 axis(2, at = 3:1, labels = rownames(studies), las = 1)
 abline(v = 1, lty = 2, col = "grey40")
 ```
@@ -270,7 +270,7 @@ abline(v = 1, lty = 2, col = "grey40")
 - Study_5 메모: **GWAS에서 p-value만 보고하면 의미가 적다 → odds ratio를 같이**
 - p-value 순으로 줄 세우면 biobank가 1등 (p = 1.9 × 10⁻⁹). 그런데 OR은 1.04 — odds가 4% 오르는 정도
 - small 연구는 OR이 가장 크지만(1.40) 사람이 적어 신뢰구간이 1을 포함 → p = 0.14
-- p-value = 효과크기 + **표본 크기**가 섞인 값 ([6장](06_hypothesis_testing.qmd) 8절). 사람이 수십만 명이면 아주 작은 효과도 p가 극단적으로 작아짐
+- p-value = 효과크기 + **표본 크기** + 변동이 섞인 값 ([6장](06_hypothesis_testing.qmd) 8절). 사람이 수십만 명이면 아주 작은 효과도 p가 극단적으로 작아짐
 - 그래서 GWAS 결과 표에는 **OR(또는 β)과 95% 신뢰구간, 대립유전자 빈도**를 p와 함께 적음
 - GWAS가 쓰는 유의수준 5 × 10⁻⁸은 SNP 수백만 개를 검정하기 때문 → [10장](10_multiple_testing.qmd)
 :::
@@ -332,7 +332,7 @@ plot(NA, xlim = c(0.7, 2.3), ylim = range(c(normal, tumor)), xaxt = "n", las = 1
 axis(1, at = 1:2, labels = c("정상", "종양"))
 segments(1, normal, 2, tumor, col = "grey70", lwd = 2)
 points(rep(1, 8), normal, pch = 19, col = "grey50")
-points(rep(2, 8), tumor, pch = 19, col = "#5B4D80")
+points(rep(2, 8), tumor, pch = 19, col = "#1F5236")
 ```
 
 | 분석 | p | 차이의 95% CI |
@@ -362,7 +362,7 @@ tab6
 mcnemar.test(tab6)
 ```
 
-- 같은 시료를 두 번 검사했으므로 두 열은 독립이 아님 → 카이제곱이 아니라 McNemar
+- 같은 시료를 두 번 검사했으므로 두 검사 결과는 독립이 아님 → 카이제곱이 아니라 McNemar
 - 두 검사가 **일치한** 시료(++와 −−)는 차이에 대한 정보가 없음
 - **불일치한** 시료만 봄: ddPCR만 양성 16개 vs NGS만 양성 2개 → p = 0.002
 - → NGS가 변이를 더 많이 놓침 (참값: 민감도 80% vs 98%)
