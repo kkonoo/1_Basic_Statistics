@@ -73,7 +73,7 @@ c(mean = mean(X), var = var(X))
 #| fig-height: 3.5
 bp <- barplot(theory, names.arg = 0:8, col = "grey70", border = NA, las = 1,
               ylim = c(0, 0.35), xlab = "aa 새끼 수", ylab = "확률")
-points(bp, sim, pch = 19, col = "#5B4D80", cex = 1.3)
+points(bp, sim, pch = 19, col = "#1F5236", cex = 1.3)
 ```
 
 - 시뮬레이션(점)이 공식(막대)에 겹침 → [2장](02_probability.qmd)에서 상자로 뽑은 것이 이항분포
@@ -137,7 +137,7 @@ c(mean = mean(tech), var = var(tech))
 par(mfrow = c(1, 3), mar = c(4, 4, 2, 1))
 for (lam in c(1, 10, 100)) {
   k <- max(0, round(lam - 4 * sqrt(lam))):max(5, round(lam + 4 * sqrt(lam)))
-  plot(k, dpois(k, lam), type = "h", lwd = 3, col = "#5B4D80", las = 1,
+  plot(k, dpois(k, lam), type = "h", lwd = 3, col = "#1F5236", las = 1,
        main = paste0("λ = ", lam), xlab = "count", ylab = "확률")
 }
 ```
@@ -193,7 +193,7 @@ rbind(mixture = c(mean = mean(mixture), var = var(mixture)),
 ```{r}
 #| label: fig-meanvar
 #| dev: "png"
-#| fig-cap: "유전자 1000개의 평균-분산 (마우스 6마리). 회색 점선: 포아송(분산 = 평균), 보라 선: 음이항(분산 = μ + 0.1μ²)"
+#| fig-cap: "유전자 1000개의 평균-분산 (마우스 6마리). 회색 점선: 포아송(분산 = 평균), 초록 선: 음이항(분산 = μ + 0.1μ²)"
 #| fig-height: 4.5
 set.seed(4)
 gene_mu <- 10^runif(1000, 0, 4)                        # 유전자별 참 평균
@@ -207,7 +207,7 @@ plot(g_mean[keep], g_var[keep], log = "xy", pch = 19, cex = 0.5, col = "grey70",
      xlab = "유전자별 평균 count", ylab = "")
 title(ylab = "유전자별 분산", line = 4.3)
 abline(0, 1, col = "grey40", lwd = 2, lty = 2)         # 분산 = 평균
-curve(x + phi * x^2, add = TRUE, col = "#5B4D80", lwd = 2)
+curve(x + phi * x^2, add = TRUE, col = "#1F5236", lwd = 2)
 sum(!keep)                                             # 분산이 0이라 빠진 유전자 수
 ```
 
@@ -241,7 +241,7 @@ for (lam in c(3, 100)) {
   k <- max(0, round(lam - 4 * sqrt(lam))):round(lam + 4 * sqrt(lam))
   plot(k, dpois(k, lam), type = "h", lwd = 3, col = "grey70", las = 1,
        main = paste0("λ = ", lam), xlab = "count", ylab = "확률")
-  curve(dnorm(x, lam, sqrt(lam)), add = TRUE, col = "#5B4D80", lwd = 2)
+  curve(dnorm(x, lam, sqrt(lam)), add = TRUE, col = "#1F5236", lwd = 2)
 }
 ```
 
@@ -307,7 +307,7 @@ $$\log L(\lambda) = \sum_{i=1}^{n} \log P(X = x_i \mid \lambda)$$
 
 ```{r}
 #| label: fig-loglik
-#| fig-cap: "λ에 따른 로그가능도. 보라 선: 최댓값(= 표본평균), 회색 점선: 참값 100"
+#| fig-cap: "λ에 따른 로그가능도. 초록 선: 최댓값(= 표본평균), 회색 점선: 참값 100"
 #| fig-height: 3.5
 loglik <- function(lam) sum(dpois(x, lam, log = TRUE))
 optimize(loglik, interval = c(50, 150), maximum = TRUE)$maximum
@@ -316,7 +316,7 @@ mean(x)
 lams <- seq(80, 120, by = 0.1)
 plot(lams, sapply(lams, loglik), type = "l", lwd = 2, col = "grey40", las = 1,
      xlab = "λ", ylab = "로그가능도")
-abline(v = mean(x), col = "#5B4D80", lwd = 2)
+abline(v = mean(x), col = "#1F5236", lwd = 2)
 abline(v = 100, col = "grey70", lwd = 2, lty = 2)
 ```
 
