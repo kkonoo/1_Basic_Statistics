@@ -121,7 +121,7 @@ round(prop.table(tab, margin = 1), 2)   # 식이별 비율 (행의 합 = 1)
 #| label: fig-grade
 #| fig-cap: "식이별 지방간 등급. 순서형 자료는 막대그래프로"
 #| fig-height: 3.5
-barplot(tab, beside = TRUE, col = c("grey70", "#5B4D80"), border = NA, las = 1,
+barplot(tab, beside = TRUE, col = c("grey70", "#1F5236"), border = NA, las = 1,
         xlab = "지방간 등급", ylab = "마우스 수",
         legend.text = TRUE, args.legend = list(x = "topright", bty = "n"))
 ```
@@ -255,7 +255,7 @@ IQR(genes)
 
 ## 1) 세 가지로 나눠서 채점하기
 
-- [6장](06_hypothesis_testing.qmd) 실험과 같은 설정: 마우스 6마리, *Cd36* 참 평균 5.0, 참 SD 0.8 → **참 분산 0.64**
+- [6장](06_hypothesis_testing.qmd) 실험과 같은 설정: 마우스 6마리, *Cd36* 참 평균 5.0, 참 SD 0.8 (log2 CPM) → **참 분산 0.64**
 - 6마리를 1만 번 새로 뽑아, 제곱합을 n, n − 1, n − 2로 나눈 값의 평균을 참값과 비교
 
 ```{r}
@@ -288,7 +288,7 @@ round(rowMeans(est), 3)
 
 ```{r}
 #| label: fig-ss
-#| fig-cap: "마우스 6마리 자료에서 기준점 c에 따른 제곱합. 표본평균(보라)에서 가장 작고, 참 평균 5.0(회색)에서는 더 큼"
+#| fig-cap: "마우스 6마리 자료에서 기준점 c에 따른 제곱합. 표본평균(초록)에서 가장 작고, 참 평균 5.0(회색)에서는 더 큼"
 #| fig-height: 3.5
 set.seed(4)
 x6 <- rnorm(6, mean = 5.0, sd = 0.8)
@@ -297,7 +297,7 @@ c(xbar = mean(x6), ss_xbar = ss(mean(x6)), ss_mu = ss(5.0))
 
 curve(ss, from = 3.5, to = 6.5, lwd = 2, col = "grey40", las = 1,
       xlab = "기준점 c", ylab = "제곱합")
-abline(v = mean(x6), col = "#5B4D80", lwd = 2)
+abline(v = mean(x6), col = "#1F5236", lwd = 2)
 abline(v = 5.0, col = "grey70", lwd = 2, lty = 2)
 ```
 
@@ -368,7 +368,7 @@ par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
 hist(genes, breaks = 50, col = "grey70", border = "white", las = 1,
      main = "read count", xlab = "read count", ylab = "유전자 수")
 lg <- log2(genes + 1)
-hist(lg, breaks = 0:ceiling(max(lg)), col = "#5B4D80", border = "white", las = 1,
+hist(lg, breaks = 0:ceiling(max(lg)), col = "#1F5236", border = "white", las = 1,
      main = "log2(count + 1)", xlab = "log2(count + 1)", ylab = "유전자 수")
 ```
 
@@ -384,9 +384,9 @@ hist(lg, breaks = 0:ceiling(max(lg)), col = "#5B4D80", border = "white", las = 1
 #| fig-cap: "식이별 체중. 상자 위에 마우스 한 마리 한 마리를 점으로 함께 그림"
 #| fig-height: 4
 boxplot(weight ~ diet, data = mice, outline = FALSE, col = "white",
-        border = c("grey40", "#5B4D80"), las = 1, xlab = "", ylab = "체중 (g)")
+        border = c("grey40", "#1F5236"), las = 1, xlab = "", ylab = "체중 (g)")
 stripchart(weight ~ diet, data = mice, vertical = TRUE, method = "jitter",
-           pch = 19, col = c("grey70", "#5B4D80"), add = TRUE)
+           pch = 19, col = c("grey70", "#1F5236"), add = TRUE)
 ```
 
 | boxplot 부분 | 뜻 |
@@ -420,14 +420,14 @@ stripchart(weight ~ diet, data = mice, vertical = TRUE, method = "jitter",
 #| fig-height: 3.5
 par(mfrow = c(1, 3), mar = c(4, 5.5, 2, 1))
 chow_w <- mice$weight[mice$diet == "Chow"]
-qqnorm(chow_w, pch = 19, col = "#5B4D80", las = 1, main = "Chow 체중 (n = 20)",
+qqnorm(chow_w, pch = 19, col = "#1F5236", las = 1, main = "Chow 체중 (n = 20)",
        xlab = "정규분포 분위수", ylab = "자료 분위수")
 qqline(chow_w, col = "grey40", lwd = 2)
-qqnorm(genes, pch = 19, cex = 0.4, col = "#5B4D80", las = 1, main = "read count",
+qqnorm(genes, pch = 19, cex = 0.4, col = "#1F5236", las = 1, main = "read count",
        xlab = "정규분포 분위수", ylab = "")
 title(ylab = "자료 분위수", line = 4.3)   # 축 제목을 바깥으로
 qqline(genes, col = "grey40", lwd = 2)
-qqnorm(lg, pch = 19, cex = 0.4, col = "#5B4D80", las = 1, main = "log2(count + 1)",
+qqnorm(lg, pch = 19, cex = 0.4, col = "#1F5236", las = 1, main = "log2(count + 1)",
        xlab = "정규분포 분위수", ylab = "자료 분위수")
 qqline(lg, col = "grey40", lwd = 2)
 ```
