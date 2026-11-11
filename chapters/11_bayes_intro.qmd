@@ -169,13 +169,13 @@ c(mse_raw    = mean((est    - true_lfc)^2),   # 참값과의 평균 제곱 오�
 ```{r}
 #| label: fig-shrink
 #| dev: "png"
-#| fig-cap: "유전자 2000개의 참 LFC와 추정 LFC. 왼쪽: 그대로, 오른쪽: shrinkage. 보라: SE가 큰 유전자(SE > 1), 회색 선: 추정 = 참값"
+#| fig-cap: "유전자 2000개의 참 LFC와 추정 LFC. 왼쪽: 그대로, 오른쪽: shrinkage. 초록: SE가 큰 유전자(SE > 1), 회색 선: 추정 = 참값"
 #| fig-height: 4
 par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
 noisy <- se > 1
 for (k in list(list(est, "그대로"), list(shrunk, "shrinkage"))) {
   plot(true_lfc, k[[1]], pch = 19, cex = 0.5, las = 1, ylim = c(-5, 5),
-       col = ifelse(noisy, "#5B4D80", "grey70"), main = k[[2]],
+       col = ifelse(noisy, "#1F5236", "grey70"), main = k[[2]],
        xlab = "참 LFC", ylab = "추정 LFC")
   abline(0, 1, col = "grey40")
 }
@@ -183,7 +183,7 @@ for (k in list(list(est, "그대로"), list(shrunk, "shrinkage"))) {
 
 - 참값 τ² = 0.25, 자료에서 추정 0.259
 - 참값과의 평균 제곱 오차: 그대로 0.82 → shrinkage 0.15
-- 왼쪽: SE가 큰 유전자(보라)가 ±4까지 흩어짐
+- 왼쪽: SE가 큰 유전자(초록)가 ±4까지 흩어짐
 - 오른쪽: SE가 큰 유전자일수록 0 쪽으로 많이 당겨짐 → 전체 오차는 크게 줄어듦
 - 대가: 참 LFC가 큰 유전자도 조금 작게 추정됨 (오른쪽 그림에서 대각선보다 0 쪽)
 
@@ -209,7 +209,7 @@ rbind(raw    = c(mean_SE = mean(se[top_raw]),    mean_abs_true = mean(abs(true_l
 
 $$\tilde{s}_g^2 = \frac{d_0\, s_0^2 + d\, s_g^2}{d_0 + d}$$
 
-- $s_0^2$: 유전자 전체의 전형적인 분산(사전), $d_0$: 사전을 몇 마리 분량으로 믿을지, $d$: 이 유전자의 자유도
+- $s_0^2$: 유전자 전체의 전형적인 분산(사전), $d_0$: 사전을 자유도 몇 개 분량으로 믿을지, $d$: 이 유전자의 자유도
 
 ```{r}
 #| label: moderated
