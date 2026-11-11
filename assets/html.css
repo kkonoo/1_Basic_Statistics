@@ -425,6 +425,8 @@ img { border-radius: 8px; }
 body.quarto-dark img,
 html[data-bs-theme="dark"] img { opacity: 0.92; }
 figcaption, .figure-caption { color: var(--course-text-2); font-size: 0.9em; }
+/* Long display equations scroll sideways on narrow screens instead of widening the page */
+.math.display { display: block; max-width: 100%; overflow-x: auto; overflow-y: hidden; }
 details > summary { cursor: pointer; }
 
 .nav-page .nav-page-text,
