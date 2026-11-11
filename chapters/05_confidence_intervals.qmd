@@ -77,6 +77,8 @@ c(xbar = xbar, s = s, se = se)
 
 $$P\left(\bar{X} - 1.96\frac{\sigma}{\sqrt{n}} \le \mu \le \bar{X} + 1.96\frac{\sigma}{\sqrt{n}}\right) = 0.95$$
 
+![위: μ는 고정, x̄의 95%가 μ ± 1.96σ/√n 안에 떨어짐. 아래: 그런 x̄로 만든 구간 x̄ ± 1.96σ/√n은 μ를 포함하고, 띠 밖의 x̄로 만든 구간만 놓침 (x̄ 위치는 설명용)](../assets/img/ch05/ci_flip.png)
+
 ```{r}
 #| label: ci-z
 xbar + c(-1, 1) * qnorm(0.975) * sigma / sqrt(n)
