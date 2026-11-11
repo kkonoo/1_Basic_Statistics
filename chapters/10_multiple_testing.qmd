@@ -111,7 +111,7 @@ $$1 - (1 - 0.05)^m$$
 #| fig-height: 3.5
 pi0_hat <- 2 * mean(p > 0.5)        # 0.5 위쪽은 거의 변화 없는 유전자 → 평평한 높이로 비율 추정
 pi0_hat
-hist(p, breaks = seq(0, 1, by = 0.025), col = "#5B4D80", border = "white", las = 1,
+hist(p, breaks = seq(0, 1, by = 0.025), col = "#1F5236", border = "white", las = 1,
      main = "", xlab = "p-value", ylab = "유전자 수")
 abline(h = pi0_hat * 20000 / 40, lty = 2, col = "grey40")    # 막대 40개
 ```
@@ -200,7 +200,7 @@ sum(q_bh < 0.05)                    # 손으로 한 결과와 같음
 ```{r}
 #| label: fig-bh
 #| dev: "png"
-#| fig-cap: "가장 작은 p-value 1000개. 보라 선: BH 기준 (k/m) × 0.05, 회색 점선(수평): Bonferroni 기준, 회색 파선(수직): BH 발견 수 k. 회색 점: 진짜 DE, 검은 ×: 변화 없는 유전자(가짜)"
+#| fig-cap: "가장 작은 p-value 1000개. 초록 선: BH 기준 (k/m) × 0.05, 회색 점선(수평): Bonferroni 기준, 회색 파선(수직): BH 발견 수 k. 회색 점: 진짜 DE, 검은 ×: 변화 없는 유전자(가짜)"
 #| fig-height: 4
 top <- o[1:1000]
 par(mar = c(4, 5.5, 1, 1))
@@ -208,7 +208,7 @@ plot(1:1000, p[top], log = "y", type = "n", las = 1, xlab = "순위 k", ylab = "
 title(ylab = "p-value (로그 척도)", line = 4.3)
 points(which(is_de[top]), p[top][is_de[top]], pch = 19, cex = 0.6, col = "grey70")     # 진짜 DE
 points(which(!is_de[top]), p[top][!is_de[top]], pch = 4, cex = 0.7, col = "black")    # 변화 없음
-lines(1:1000, (1:1000) / 20000 * q_level, col = "#5B4D80", lwd = 2)   # BH 기준
+lines(1:1000, (1:1000) / 20000 * q_level, col = "#1F5236", lwd = 2)   # BH 기준
 abline(h = 0.05 / 20000, lty = 3, col = "grey40")                      # Bonferroni 기준
 abline(v = k, lty = 2, col = "grey40")
 ```
