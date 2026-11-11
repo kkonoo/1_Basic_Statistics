@@ -8,7 +8,7 @@ project:
 website:
   title: "1. Basic Statistics"
   description: "기초통계: 확률변수와 분포에서 p-value, 다중검정까지 — 시뮬레이션으로 이해하기"
-  favicon: images/logo.ico
+  favicon: images/logo.ico/favicon.ico
   navbar:
     left:
       - href: index.qmd
