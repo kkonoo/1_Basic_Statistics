@@ -62,10 +62,10 @@ obs <- mean(hfd) - mean(chow)
 obs
 
 stripchart(list(Chow = chow, HFD = hfd), vertical = TRUE, method = "jitter",
-           pch = 19, col = c("grey40", "#5B4D80"), cex = 1.4,
+           pch = 19, col = c("grey40", "#1F5236"), cex = 1.4,
            ylab = "Cd36 (log2 CPM)", las = 1)
 segments(c(0.8, 1.8), c(mean(chow), mean(hfd)), c(1.2, 2.2), c(mean(chow), mean(hfd)),
-         lwd = 3, col = c("grey40", "#5B4D80"))
+         lwd = 3, col = c("grey40", "#1F5236"))
 ```
 
 - HFD 평균이 1.04 높음
@@ -116,7 +116,7 @@ length(perm)
 ```{r}
 #| label: fig-perm
 #| fig-cap: "라벨을 섞어 만든 귀무분포(924가지). 빨간 선은 관측값 ±1.04"
-hist(perm, breaks = 40, col = "#e8e4f0", border = "white", las = 1,
+hist(perm, breaks = 40, col = "#E9EEEB", border = "white", las = 1,
      main = "", xlab = "평균 차이 (HFD - Chow)")
 abline(v = c(-obs, obs), col = "#C0392B", lwd = 2, lty = c(2, 1))
 ```
@@ -207,9 +207,9 @@ perm_t <- sapply(seq_len(ncol(idx)), function(k) {
   i <- idx[, k]
   t.test(x[i], x[-i], var.equal = TRUE)$statistic
 })
-hist(perm_t, breaks = 40, freq = FALSE, col = "#e8e4f0", border = "white",
+hist(perm_t, breaks = 40, freq = FALSE, col = "#E9EEEB", border = "white",
      las = 1, main = "", xlab = "t", xlim = c(-6, 6))
-curve(dt(x, df = 10), add = TRUE, lwd = 2, col = "#5B4D80")
+curve(dt(x, df = 10), add = TRUE, lwd = 2, col = "#1F5236")
 abline(v = c(-t_obs, t_obs), col = "#C0392B", lwd = 2, lty = c(2, 1))
 ```
 
@@ -231,7 +231,7 @@ abline(v = c(-t_obs, t_obs), col = "#C0392B", lwd = 2, lty = c(2, 1))
 |---|---|---|
 | p > 0.05면 차이가 없다 | 차이를 **보여주지 못했을** 뿐 | 참 차이 1.0인데 p = 0.08 |
 | p = 0.08은 $H_0$가 참일 확률 8% | $H_0$가 참이라고 **놓고** 계산한 값 | $H_0$는 사실 거짓 (참 차이 1.0) |
-| p가 작을수록 효과가 크다 | p는 효과크기 + 표본 크기 + 변동이 섞인 값 | 7절 참고 |
+| p가 작을수록 효과가 크다 | p는 효과크기 + 표본 크기 + 변동이 섞인 값 | 8절 참고 |
 | 1 - p = 재현될 확률 | 재현 확률은 검정력에 달림 | 같은 실험을 반복하면 절반쯤만 p < 0.05 (7장) |
 | p < 0.05면 결과가 우연이 아니다 | $H_0$ 아래에서도 5%는 p < 0.05 | 7절 참고 |
 
@@ -277,9 +277,9 @@ mean(p_eff < 0.05)
 #| fig-cap: "p-value 분포. 왼쪽: 효과 없음(균일), 오른쪽: 효과 1.25 SD(0 근처에 몰림)"
 #| fig-height: 3.5
 par(mfrow = c(1, 2))
-hist(p_null, breaks = 20, col = "#e8e4f0", border = "white", las = 1,
+hist(p_null, breaks = 20, col = "#E9EEEB", border = "white", las = 1,
      main = "효과 없음", xlab = "p-value")
-hist(p_eff, breaks = 20, col = "#5B4D80", border = "white", las = 1,
+hist(p_eff, breaks = 20, col = "#1F5236", border = "white", las = 1,
      main = "효과 1.25 SD", xlab = "p-value")
 ```
 
@@ -322,7 +322,7 @@ round(res, 4)
 # 9. 신뢰구간과 p-value는 같은 동전의 양면
 
 - 5.3절 `t.test()` 결과의 95% 신뢰구간: **(-0.15, 2.23)**
-- 구간이 **0을 포함** ↔ 양측 p > 0.05
+- 구간이 **0을 포함** ↔ 양측 p ≥ 0.05
 
 | 95% 신뢰구간 | 양측 p-value | 판정 |
 |---|---|---|
